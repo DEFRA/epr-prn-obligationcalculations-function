@@ -26,15 +26,15 @@ parameters:
 pool: DEFRA-COMMON-ubuntu2004-SSV3
 
 variables:
-  - template: vars/DEV10-development.yaml
+  - template: vars/DEV4-development.yaml
   - name: solutionFolder
     value: src
   - name: projectFolder
-    value: EPR.Payment.Mopup
+    value: EPR.PRN.ObligationCalculation.Function
   - name: testProjectFolder
-    value: 'EPR.Payment.Mopup.Common.UnitTests'
-  - name: DataFolder
-    value: 'EPR.Payment.Mopup.Common.Data'
+    value: 'EPR.PRN.ObligationCalculation.Function.UnitTests'
+  # - name: DataFolder
+  #   value: 'EPR.Payment.Mopup.Common.Data'
   - name: sonarQubeProjectKey
     value: epr-prn-obligationcalculations-function
   - name: sonarQubeProjectName
@@ -56,7 +56,7 @@ extends:
   parameters:
     solutionFolder: ${{ variables.solutionFolder }}
     projectFolder: ${{ variables.projectFolder }}
-    DataFolder: ${{ variables.DataFolder }}
+    # DataFolder: ${{ variables.DataFolder }}
     testProjectFolder: ${{ variables.testProjectFolder }}
     sonarQubeProjectKey: ${{ variables.sonarQubeProjectKey }}
     sonarQubeProjectName: ${{ variables.sonarQubeProjectName }}
@@ -68,6 +68,6 @@ extends:
     branchName: ${{ replace(replace(variables['Build.SourceBranch'], 'refs/heads/', ''), '/', '_') }}
     runNugetTasks: ${{ variables.runNugetTasks }}
     serviceName: $(serviceName)
-    buildMigrationScript: true
+    # buildMigrationScript: true
     sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
     dotnetVersion: ${{ variables.dotnetVersion }}
