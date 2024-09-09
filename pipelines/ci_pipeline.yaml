@@ -33,8 +33,6 @@ variables:
     value: EPR.PRN.ObligationCalculation.Function
   - name: testProjectFolder
     value: 'EPR.PRN.ObligationCalculation.Function.UnitTests'
-  # - name: DataFolder
-  #   value: 'EPR.Payment.Mopup.Common.Data'
   - name: sonarQubeProjectKey
     value: epr-prn-obligationcalculations-function
   - name: sonarQubeProjectName
@@ -56,7 +54,6 @@ extends:
   parameters:
     solutionFolder: ${{ variables.solutionFolder }}
     projectFolder: ${{ variables.projectFolder }}
-    # DataFolder: ${{ variables.DataFolder }}
     testProjectFolder: ${{ variables.testProjectFolder }}
     sonarQubeProjectKey: ${{ variables.sonarQubeProjectKey }}
     sonarQubeProjectName: ${{ variables.sonarQubeProjectName }}
@@ -68,6 +65,5 @@ extends:
     branchName: ${{ replace(replace(variables['Build.SourceBranch'], 'refs/heads/', ''), '/', '_') }}
     runNugetTasks: ${{ variables.runNugetTasks }}
     serviceName: $(serviceName)
-    # buildMigrationScript: true
     sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
     dotnetVersion: ${{ variables.dotnetVersion }}
