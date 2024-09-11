@@ -1,0 +1,6 @@
+variables:
+  azureSubscription: 'AZD-RWD-TST1'
+  docker.imageName: 'eprobligationcalc'
+  acr.azureContainerRegistryName: 'tstrwdinfac1401'
+  acr.repositoryName: 'eprobligationcalcrepository'
+  serviceName: 'TSTRWDWEBFA1410'
