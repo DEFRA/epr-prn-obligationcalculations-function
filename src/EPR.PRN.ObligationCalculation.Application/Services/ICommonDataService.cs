@@ -1,7 +1,6 @@
-﻿namespace EPR.PRN.ObligationCalculation.Application.Services
+﻿namespace EPR.PRN.ObligationCalculation.Application.Services;
+
+public interface ICommonDataService
 {
-    public interface ICommonDataService
-    {
-        Task<HttpResponseMessage> GetApprovedSubmissionsWithAggregatedPomData(string approvedAfterDateString);
-    }
+    Task<HttpResponseMessage> GetApprovedSubmissionsWithAggregatedPomData(string approvedAfterDateString);
 }
