@@ -1,5 +1,5 @@
+using EPR.PRN.ObligationCalculation.Application;
 using EPR.PRN.ObligationCalculation.Application.Services;
-using EPR.PRN.ObligationCalculation.Function;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,6 +15,7 @@ var host = new HostBuilder()
     {
         services.AddHttpClient<ApiClient>();
         services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
+        services.AddScoped<IAppInsightsProvider, AppInsightsProvider>();
     })
     .Build();
 

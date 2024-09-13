@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Net;
-using System.Text;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
@@ -17,7 +15,7 @@ public class SubmissionsDataService : ISubmissionsDataService
     {
         _logger = loggerFactory.CreateLogger<SubmissionsDataService>();
         _apiClient = apiClient;
-        _submissionsBaseUrl = configuration["SubmissionsBaseUrl"] ?? throw new InvalidOperationException("SubmissionsBaseUrl configuration is missing.");
+        //_submissionsBaseUrl = configuration["SubmissionsBaseUrl"] ?? throw new InvalidOperationException("SubmissionsBaseUrl configuration is missing.");
     }
 
     public async Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string approvedAfterDateString)

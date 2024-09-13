@@ -1,0 +1,9 @@
+{
+  "SubmissionsApiConfig": {
+    "BaseUrl": "https://devrwdwebwaX408.azurewebsites.net",
+    "Timeout": 30,
+    "ServiceRetryCount": 6,
+    "ApiVersion": 1,
+    "Endpoint": ""
+  }
+}

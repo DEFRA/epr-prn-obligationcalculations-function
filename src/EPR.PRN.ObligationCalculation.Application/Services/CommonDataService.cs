@@ -6,19 +6,26 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
 {
     public class CommonDataService : ICommonDataService
     {
-        private readonly HttpClient _httpClient;
+        private readonly ApiClient _httpClient;
         private readonly CommonDataApiConfig _apiConfig;
         private readonly ILogger<CommonDataService> _logger;
 
-        public CommonDataService(HttpClient httpClient, IOptions<CommonDataApiConfig> apiConfig, ILogger<CommonDataService> logger)
+        public CommonDataService(ApiClient httpClient, IOptions<CommonDataApiConfig> apiConfig, ILogger<CommonDataService> logger)
         {
             _httpClient = httpClient;
             _apiConfig = apiConfig.Value;
             _logger = logger;
         }
-        public async Task<HttpResponseMessage> GetApprovedSubmissionsWithAggregatedPomData(string approvedAfterDateString)
+
+        public Task<HttpResponseMessage> GetApprovedSubmissionsWithAggregatedPomData(string approvedAfterDateString)
         {
-            return await _httpClient.GetAsync($"{_apiConfig.Endpoint}{approvedAfterDateString}");
+            throw new NotImplementedException();
         }
+
+        //public async Task<HttpResponseMessage> GetApprovedSubmissionsWithAggregatedPomData(string approvedAfterDateString)
+        //{
+        //    return new NotImplementedException();
+        //    //return await _httpClient.GetAsync($"{_apiConfig.Endpoint}{approvedAfterDateString}");
+        //}
     }
 }
