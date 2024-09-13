@@ -8,7 +8,6 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
     {
         public AppInsightsProvider()
         {
-
         }
 
         public async Task<DateTime> GetParameterForApprovedSubmissionsApiCall()
@@ -25,7 +24,7 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
             }
         }
 
-        private async Task<DateTime?> GetLastSuccessfulRunFromInsights()
+        private static async Task<DateTime?> GetLastSuccessfulRunFromInsights()
         {
             string appId = "d0f1af04-0bf9-4e1e-bb4d-3a4b9d40cf04";
             string apiKey = "j2ttlxmuqd82cl0m1u7vgeygy05k8k8n4ctmb6k6";
@@ -42,7 +41,7 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
                 var content = new StringContent(query, Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await client.PostAsync(url, content);
 
-                if (!response.IsSuccessStatusCode || response == null)
+                if (!response.IsSuccessStatusCode)
                 {
                     return null;
                 }

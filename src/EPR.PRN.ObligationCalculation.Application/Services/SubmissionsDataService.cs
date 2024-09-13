@@ -2,20 +2,18 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Net;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
 public class SubmissionsDataService : ISubmissionsDataService
 {
-    private readonly ApiClient _apiClient;
     private readonly ILogger _logger;
-    private readonly string _submissionsBaseUrl;
-
-    public SubmissionsDataService(ILoggerFactory loggerFactory, ApiClient apiClient, IConfiguration configuration)
+    private readonly IConfiguration _configuration;
+    public SubmissionsDataService(ILoggerFactory loggerFactory, IConfiguration configuration)
     {
         _logger = loggerFactory.CreateLogger<SubmissionsDataService>();
-        _apiClient = apiClient;
-        //_submissionsBaseUrl = configuration["SubmissionsBaseUrl"] ?? throw new InvalidOperationException("SubmissionsBaseUrl configuration is missing.");
+        _configuration = configuration;
     }
 
     public async Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string approvedAfterDateString)
@@ -28,12 +26,15 @@ public class SubmissionsDataService : ISubmissionsDataService
 
     private async Task<List<ApprovedSubmissionEntity>> GetSubmissions(string approvedAfterDateString)
     {
-        string endpoint = _submissionsBaseUrl + "/v1/pom/approved/" + approvedAfterDateString;
+        string _submissionsBaseUrl = _configuration["SubmissionsBaseUrl"] ?? throw new InvalidOperationException("SubmissionsBaseUrl configuration is missing.");
+        string _submissionsEndPoint = _configuration["SubmissionsEndPoint"] ?? throw new InvalidOperationException("SubmissionsEndPoint configuration is missing.");
+
+        string endpoint = _submissionsBaseUrl + _submissionsEndPoint + approvedAfterDateString;
         _logger.LogInformation("Fetching Submissions data from: {Endpoint}", endpoint);
 
         try
         {
-            var result = await _apiClient.GetDataAsync(endpoint);
+            var result = await GetDataAsync(endpoint);
 
             if (string.IsNullOrEmpty(result))
             {
@@ -52,5 +53,13 @@ public class SubmissionsDataService : ISubmissionsDataService
             _logger.LogError(ex, "Error while getting submissions data from {Endpoint} : {Ex}", endpoint, ex.Message);
             throw;
         }
+    }
+
+    private static async Task<string> GetDataAsync(string endpoint)
+    {
+        var _httpClient = new HttpClient();
+        var response = await _httpClient.GetAsync(endpoint);
+
+        return response.StatusCode.HasFlag(HttpStatusCode.OK) ? await response.Content.ReadAsStringAsync() : string.Empty;
     }
 }

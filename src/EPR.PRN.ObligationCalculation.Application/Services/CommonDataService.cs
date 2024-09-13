@@ -6,13 +6,11 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
 {
     public class CommonDataService : ICommonDataService
     {
-        private readonly ApiClient _httpClient;
         private readonly CommonDataApiConfig _apiConfig;
         private readonly ILogger<CommonDataService> _logger;
 
-        public CommonDataService(ApiClient httpClient, IOptions<CommonDataApiConfig> apiConfig, ILogger<CommonDataService> logger)
+        public CommonDataService(IOptions<CommonDataApiConfig> apiConfig, ILogger<CommonDataService> logger)
         {
-            _httpClient = httpClient;
             _apiConfig = apiConfig.Value;
             _logger = logger;
         }

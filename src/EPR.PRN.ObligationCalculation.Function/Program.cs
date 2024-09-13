@@ -10,10 +10,7 @@ var host = new HostBuilder()
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-    })
-    .ConfigureServices(services =>
-    {
-        services.AddHttpClient<ApiClient>();
+        services.AddHttpClient();
         services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
         services.AddScoped<IAppInsightsProvider, AppInsightsProvider>();
     })
