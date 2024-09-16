@@ -11,14 +11,16 @@ namespace EPR.PRN.ObligationCalculation.Function
         private readonly ILogger _logger;
         private readonly ISubmissionsDataService _submissionsService;
         private readonly IAppInsightsProvider _appInsightsProvider;
+        private readonly IServiceBusProvider _serviceBusProvider;
 
         private readonly string LogPrefix = "[StoreApprovedSubmissionsFunction]:";
 
-        public StoreApprovedSubmissionsFunction(ILoggerFactory loggerFactory, IConfiguration configuration, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider)
+        public StoreApprovedSubmissionsFunction(ILoggerFactory loggerFactory, IConfiguration configuration, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider, IServiceBusProvider serviceBusProvider)
         {
             _logger = loggerFactory.CreateLogger<StoreApprovedSubmissionsFunction>();
             _submissionsService = submissionsService;
             _appInsightsProvider = appInsightsProvider;
+            _serviceBusProvider = serviceBusProvider;
         }
 
         [Function("StoreApprovedSubmissionsFunction")]
@@ -27,7 +29,12 @@ namespace EPR.PRN.ObligationCalculation.Function
             _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
 
             DateTime createdDate = _appInsightsProvider.GetParameterForApprovedSubmissionsApiCall().Result;
-            await _submissionsService.GetApprovedSubmissionsData(createdDate.ToString("yyyy-MM-dd"));
+            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(createdDate.ToString("yyyy-MM-dd"));
+
+            if (approvedSubmissionEntities.Count > 0)
+            {
+                await _serviceBusProvider.SendApprovedSubmissionsToQueue(approvedSubmissionEntities);
+            }
         }
     }
 }

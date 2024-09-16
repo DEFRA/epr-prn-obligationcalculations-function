@@ -13,6 +13,7 @@ var host = new HostBuilder()
         services.AddHttpClient();
         services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
         services.AddScoped<IAppInsightsProvider, AppInsightsProvider>();
+        services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
     })
     .Build();
 

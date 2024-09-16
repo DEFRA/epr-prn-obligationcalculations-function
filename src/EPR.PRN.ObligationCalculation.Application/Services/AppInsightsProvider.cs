@@ -1,5 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Azure.Identity;
+using Azure.Monitor.Query;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services
@@ -14,14 +16,9 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
         {
             DateTime? lastSuccessfulRundateFromInsights = await GetLastSuccessfulRunFromInsights();
 
-            if (lastSuccessfulRundateFromInsights == null)
-            {
-                return new DateTime(DateTime.Now.Year, 1, 1);
-            }
-            else
-            {
-                return lastSuccessfulRundateFromInsights.Value;
-            }
+            return lastSuccessfulRundateFromInsights == null
+                ? new DateTime(DateTime.Now.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+                : lastSuccessfulRundateFromInsights.Value;
         }
 
         private static async Task<DateTime?> GetLastSuccessfulRunFromInsights()
@@ -58,6 +55,31 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
 
                 return Convert.ToDateTime(rootElement.GetProperty("tables")[0].GetProperty("rows")[0][0].ToString());
             }
+        }
+
+        private static async Task<DateTime?> GetLastSuccessfulRunFromInsightsAPI()
+        {
+            string clientId = "dd6d3e95-eef6-48e8-84cd-05321152c24f";
+            string tenantId = "6f504113-6b64-43f2-ade9-242e05780007";
+            string clientSecret = "<your-client-secret>";
+            string workspaceId = "4d0d277f-63d3-49e3-a58a-62e89896356d";
+
+            var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+            var logsClient = new LogsQueryClient(credential);
+
+            string logToFind = $"{ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix} COMPLETED";
+            string query = $@"AppTraces
+                         | where Message startswith '{logToFind}'
+                         | project TimeGenerated
+                         | order by TimeGenerated desc
+                         | limit 1";
+            var response = await logsClient.QueryWorkspaceAsync(workspaceId, query, TimeSpan.FromDays(1));
+            if (response.Value.Table.Rows.Count > 0)
+            {
+                var row = response.Value.Table.Rows[0];
+                return Convert.ToDateTime(row["TimeGenerated"].ToString());
+            }
+            return null;
         }
     }
 }
