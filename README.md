@@ -18,3 +18,26 @@ The README should include the following (if they apply):
 - **Contributing to the project** - what to know before you submit your first pull request (this could also be in the form of a CONTRIBUTING.md  file)
 
 - **Licence information** – what licence the repo uses (in addition to your LICENSE file)
+## Running on a developer machine
+To run locally, create a file `local.settings.json`. This file is in `.gitignore`.
+
+```
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        "Submissions__BaseUrl": "http://localhost:5001/api/submissions",
+        "Submissions__EndPoint": "/v1/pom/approved/",
+        "AppInsights__ClientId": "",
+        "AppInsights__TenantId": "",
+        "AppInsights__ClientSecret": "",
+        "AppInsights__WorkspaceId": "",
+        "ServiceBus__Namespace": "DEVRWDINFSB1402.servicebus.windows.net",
+        "ServiceBus__QueueName": "defra.epr.obligation",
+        "ServiceBus__ConnectionString": "",
+        "ApiConfig__DeveloperMode": true,
+        "StoreApprovedSubmissions__Schedule": "*/10 * * * * *"
+    }
+}
+```
