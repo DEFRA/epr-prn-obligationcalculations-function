@@ -1,10 +1,12 @@
-﻿namespace EPR.PRN.ObligationCalculation.Application.Configs
-{
-    public class SubmissionsApiConfig
-    {
+﻿using System.Diagnostics.CodeAnalysis;
 
-        public const string SectionName = "Submissions";
-        public string BaseUrl { get; set; } = null!;
-        public string EndPoint { get; set; } = null!;
-    }
+namespace EPR.PRN.ObligationCalculation.Application.Configs;
+
+[ExcludeFromCodeCoverage]
+public class SubmissionsApiConfig
+{
+
+    public const string SectionName = "Submissions";
+    public string BaseUrl { get; set; } = null!;
+    public string EndPoint { get; set; } = null!;
 }

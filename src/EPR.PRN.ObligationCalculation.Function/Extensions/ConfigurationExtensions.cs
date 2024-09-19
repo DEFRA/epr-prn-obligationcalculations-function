@@ -1,7 +1,5 @@
 ﻿namespace EPR.PRN.ObligationCalculation.Function.Extensions;
 
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Http.Headers;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Messaging.ServiceBus;
@@ -12,6 +10,8 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
 
 [ExcludeFromCodeCoverage]
 public static class ConfigurationExtensions

@@ -1,7 +1,11 @@
-﻿namespace EPR.PRN.ObligationCalculation.Application.Configs
+﻿#nullable disable
+
+using System.Diagnostics.CodeAnalysis;
+
+namespace EPR.PRN.ObligationCalculation.Application.Configs;
+
+[ExcludeFromCodeCoverage]
+public static class ApplicationConstants
 {
-    public static class ApplicationConstants
-    {
-        public static string StoreApprovedSubmissionsFunctionLogPrefix = "[StoreApprovedSubmissionsFunction]:";
-    }
+    public const string StoreApprovedSubmissionsFunctionLogPrefix = "[StoreApprovedSubmissionsFunction]:";
 }

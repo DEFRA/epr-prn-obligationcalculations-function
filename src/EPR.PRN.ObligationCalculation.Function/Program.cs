@@ -1,8 +1,3 @@
-using Azure.Core;
-using Azure.Identity;
-using Azure.Messaging.ServiceBus;
-using Azure.Monitor.Query;
-using EPR.PRN.ObligationCalculation.Application;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.Extensions;
 using Microsoft.Azure.Functions.Worker;
@@ -27,4 +22,4 @@ var host = new HostBuilder()
     })
     .Build();
 
-host.Run();
+await host.RunAsync();
