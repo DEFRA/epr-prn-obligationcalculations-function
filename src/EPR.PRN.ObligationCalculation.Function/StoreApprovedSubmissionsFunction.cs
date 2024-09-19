@@ -1,4 +1,3 @@
-using EPR.PRN.ObligationCalculation.Application;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
@@ -33,12 +32,12 @@ namespace EPR.PRN.ObligationCalculation.Function
 
             if (approvedSubmissionEntities.Count > 0)
             {
-                _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
+                _logger.LogInformation("{LogPrefix} >>>>> Number of Submissions received : {ApprovedSubmissionEntitiesCount}", LogPrefix, approvedSubmissionEntities.Count);
                 await _serviceBusProvider.SendApprovedSubmissionsToQueue(approvedSubmissionEntities);
             }
             else
             {
-                _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
+                _logger.LogInformation("{LogPrefix} >>>>> No new submissions received <<<<< ", LogPrefix);
             }
         }
     }
