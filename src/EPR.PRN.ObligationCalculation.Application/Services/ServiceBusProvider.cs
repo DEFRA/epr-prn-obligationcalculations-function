@@ -1,5 +1,4 @@
-﻿#nullable disable
-using Azure.Messaging.ServiceBus;
+﻿using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using Microsoft.Extensions.Logging;
@@ -27,7 +26,7 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
                                     .Distinct()
                                     .ToList();
 
-            ServiceBusSender sender = _serviceBusClient.CreateSender(_config.QueueName);
+            var sender = _serviceBusClient.CreateSender(_config.QueueName);
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
             foreach (var organisationId in organisationIds)
             {

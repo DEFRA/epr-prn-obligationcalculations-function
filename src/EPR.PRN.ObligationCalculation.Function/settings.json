@@ -5,15 +5,14 @@
         "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
         "Submissions__BaseUrl": "UseDevelopmentStorage=true",
         "Submissions__EndPoint": "UseDevelopmentStorage=true",
-        "AppInsights__AppId": "UseDevelopmentStorage=true",
-        "AppInsights__ApiKey": "UseDevelopmentStorage=true",
-        "AppInsights__ApiUrl": "UseDevelopmentStorage=true",
         "AppInsights__ClientId": "UseDevelopmentStorage=true",
         "AppInsights__TenantId": "UseDevelopmentStorage=true",
         "AppInsights__ClientSecret": "UseDevelopmentStorage=true",
         "AppInsights__WorkspaceId": "UseDevelopmentStorage=true",
         "ServiceBus__Namespace": "UseDevelopmentStorage=true",
         "ServiceBus__QueueName": "UseDevelopmentStorage=true",
-        "ServiceBus__ConnectionString": "UseDevelopmentStorage=true"
+        "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",
+        "ApiConfig__DeveloperMode": false,
+        "StoreApprovedSubmissions__Schedule": "*/10 * * * * *"
     }
 }

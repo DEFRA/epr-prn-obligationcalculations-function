@@ -17,7 +17,7 @@ var host = new HostBuilder()
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
         services.ConfigureOptions(hostingContext.Configuration);
         services.AddHttpClients();
-        services.AddAzureClients();
+        services.AddAzureClients(hostingContext.Configuration);
 
     })
     .Build();

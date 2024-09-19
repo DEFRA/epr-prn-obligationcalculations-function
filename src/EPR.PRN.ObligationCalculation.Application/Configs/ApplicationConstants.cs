@@ -1,6 +1,4 @@
-﻿#nullable disable
-
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace EPR.PRN.ObligationCalculation.Application.Configs;
 
