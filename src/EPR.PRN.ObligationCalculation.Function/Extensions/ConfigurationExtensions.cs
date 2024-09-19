@@ -24,7 +24,7 @@ public static class ConfigurationExtensions
         return services;
     }
 
-    public static IServiceCollection AddAzureClients(this IServiceCollection services)
+    public static IServiceCollection AddAzureClients(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddAzureClients(clientBuilder =>
         {
@@ -37,29 +37,39 @@ public static class ConfigurationExtensions
             });
         });
 
-        services.AddAzureClients(clientBuilder =>
+        var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
+        if (isDevMode is true)
         {
-            clientBuilder.AddClient<ServiceBusClient, ServiceBusClientOptions>(options =>
+            services.AddAzureClients(clientBuilder =>
             {
-                options.TransportType = ServiceBusTransportType.AmqpWebSockets;
-                var sp = services.BuildServiceProvider();
-                var serviceBusConfig = sp.GetRequiredService<IOptions<ServiceBusConfig>>().Value;
-                return new(serviceBusConfig.ConnectionString, options);
+                clientBuilder.AddClient<ServiceBusClient, ServiceBusClientOptions>(options =>
+                {
+                    options.TransportType = ServiceBusTransportType.AmqpWebSockets;
+                    var sp = services.BuildServiceProvider();
+                    var serviceBusConfig = sp.GetRequiredService<IOptions<ServiceBusConfig>>().Value;
+                    return new(serviceBusConfig.ConnectionString, options);
+                });
             });
-        });
+        }
+        else
+        {
+            services.AddAzureClients(clientBuilder =>
+            {
+                clientBuilder.AddClient<ServiceBusClient, ServiceBusClientOptions>(options =>
+                {
+                    options.TransportType = ServiceBusTransportType.AmqpWebSockets;
+                    var sp = services.BuildServiceProvider();
+                    var serviceBusConfig = sp.GetRequiredService<IOptions<ServiceBusConfig>>().Value;
+                    return new(serviceBusConfig.Namespace, new DefaultAzureCredential(), options);
+                });
+            });
+        }
+
         return services;
     }
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services)
     {
-        services.AddHttpClient<IAppInsightsProvider, AppInsightsProvider>((sp, c) =>
-        {
-            var config = sp.GetRequiredService<IOptions<AppInsightsConfig>>().Value;
-            c.BaseAddress = new Uri(config.ApiUrl);
-            c.DefaultRequestHeaders.Add("x-api-key", config.ApiKey);
-            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
-
         services.AddHttpClient<ISubmissionsDataService, SubmissionsDataService>((sp, c) =>
         {
             var config = sp.GetRequiredService<IOptions<SubmissionsApiConfig>>().Value;

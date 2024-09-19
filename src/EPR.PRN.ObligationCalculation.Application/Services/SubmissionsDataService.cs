@@ -33,7 +33,7 @@ public class SubmissionsDataService : ISubmissionsDataService
         string _submissionsEndPoint = _config.EndPoint;
 
         string endpoint = _submissionsBaseUrl + _submissionsEndPoint + approvedAfterDateString;
-        _logger.LogInformation("Fetching Submissions data from: {Endpoint}", endpoint);
+        _logger.LogInformation("{logPrefix} Fetching Submissions data from: {Endpoint}", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, endpoint);
 
         try
         {
@@ -41,19 +41,19 @@ public class SubmissionsDataService : ISubmissionsDataService
 
             if (string.IsNullOrEmpty(result))
             {
-                _logger.LogWarning("No submissions data found for {ApprovedAfterDateString}", approvedAfterDateString);
+                _logger.LogWarning("{LogPrefix} No submissions data found for {ApprovedAfterDateString}", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, approvedAfterDateString);
                 return new List<ApprovedSubmissionEntity>();
             }
             else
             {
-                _logger.LogInformation("Submissions data: {Result}", result);
+                _logger.LogInformation("{LogPrefix} Submissions data: {Result}", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, result);
 
                 return JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(result) ?? [];
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while getting submissions data from {Endpoint} : {Ex}", endpoint, ex.Message);
+            _logger.LogError(ex, "{LogPrefix} Error while getting submissions data from {Endpoint} : {Ex}", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, endpoint, ex.Message);
             throw;
         }
     }
