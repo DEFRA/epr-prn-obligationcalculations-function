@@ -8,16 +8,16 @@ namespace EPR.PRN.ObligationCalculation.Function
 {
     public class StoreApprovedSubmissionsFunction
     {
-        private readonly ILogger _logger;
         private readonly ISubmissionsDataService _submissionsService;
         private readonly IAppInsightsProvider _appInsightsProvider;
         private readonly IServiceBusProvider _serviceBusProvider;
+        private readonly ILogger<StoreApprovedSubmissionsFunction> _logger;
 
         private readonly string LogPrefix = "[StoreApprovedSubmissionsFunction]:";
 
-        public StoreApprovedSubmissionsFunction(ILoggerFactory loggerFactory, IConfiguration configuration, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider, IServiceBusProvider serviceBusProvider)
+        public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, IConfiguration configuration, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider, IServiceBusProvider serviceBusProvider)
         {
-            _logger = loggerFactory.CreateLogger<StoreApprovedSubmissionsFunction>();
+            _logger = logger;
             _submissionsService = submissionsService;
             _appInsightsProvider = appInsightsProvider;
             _serviceBusProvider = serviceBusProvider;
@@ -33,7 +33,12 @@ namespace EPR.PRN.ObligationCalculation.Function
 
             if (approvedSubmissionEntities.Count > 0)
             {
+                _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
                 await _serviceBusProvider.SendApprovedSubmissionsToQueue(approvedSubmissionEntities);
+            }
+            else
+            {
+                _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
             }
         }
     }

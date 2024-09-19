@@ -1,12 +1,18 @@
+using Azure.Core;
+using Azure.Identity;
+using Azure.Messaging.ServiceBus;
+using Azure.Monitor.Query;
 using EPR.PRN.ObligationCalculation.Application;
 using EPR.PRN.ObligationCalculation.Application.Services;
+using EPR.PRN.ObligationCalculation.Function.Extensions;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
-    .ConfigureServices(services =>
+    .ConfigureServices((hostingContext, services) =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
@@ -14,6 +20,10 @@ var host = new HostBuilder()
         services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
         services.AddScoped<IAppInsightsProvider, AppInsightsProvider>();
         services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
+        services.ConfigureOptions(hostingContext.Configuration);
+        services.AddHttpClients();
+        services.AddAzureClients();
+
     })
     .Build();
 

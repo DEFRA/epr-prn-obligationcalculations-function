@@ -1,31 +1,24 @@
 ﻿#nullable disable
-
-using Azure.Identity;
 using Azure.Messaging.ServiceBus;
+using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services
 {
     public class ServiceBusProvider : IServiceBusProvider
     {
-        private readonly ILogger _logger;
+        private readonly ILogger<ServiceBusProvider> _logger;
         private readonly ServiceBusClient _serviceBusClient;
+        private readonly ServiceBusConfig _config;
 
-        private readonly string _serviceBusQueueName = string.Empty;
-
-        public ServiceBusProvider(ILoggerFactory loggerFactory, IConfiguration configuration)
+        public ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusClient serviceBusClient, IOptions<ServiceBusConfig> config)
         {
-            _logger = loggerFactory.CreateLogger<SubmissionsDataService>();
-            _serviceBusQueueName = configuration["ServiceBusQueueName"] ?? throw new InvalidOperationException("ServiceBusQueueName configuration is missing.");
-            var serviceBusConnectionString = configuration["ServiceBusConnectionString"] ?? throw new InvalidOperationException("ServiceBusConnectionString configuration is missing.");
-            var serviceBusClientOptions = new ServiceBusClientOptions
-            {
-                TransportType = ServiceBusTransportType.AmqpWebSockets
-            };
-            _serviceBusClient = new ServiceBusClient(serviceBusConnectionString, serviceBusClientOptions);
+            _logger = logger;
+            _serviceBusClient = serviceBusClient;
+            _config = config.Value;
         }
         public async Task SendApprovedSubmissionsToQueue(List<ApprovedSubmissionEntity> approvedSubmissionEntities)
         {
@@ -34,9 +27,8 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
                                     .Distinct()
                                     .ToList();
 
-            ServiceBusSender sender = _serviceBusClient.CreateSender(_serviceBusQueueName);
+            ServiceBusSender sender = _serviceBusClient.CreateSender(_config.QueueName);
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
-
             foreach (var organisationId in organisationIds)
             {
                 var submissions = approvedSubmissionEntities.Where(s => s.OrganisationId == organisationId).ToList();
@@ -45,13 +37,13 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
                     var jsonSumissions = JsonSerializer.Serialize(submissions, new JsonSerializerOptions { WriteIndented = true });
                     if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonSumissions)))
                     {
-                        _logger.LogWarning("The message {OrganisationId} is too large to fit in the batch.", organisationId);
+                        _logger.LogWarning("{LogPrefix} The message {OrganisationId} is too large to fit in the batch.", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, organisationId);
                     }
                 }
             }
 
             await sender.SendMessagesAsync(messageBatch);
-            _logger.LogInformation("A batch of {MessageBatchCount} messages has been published to the queue.", messageBatch.Count);
+            _logger.LogInformation("{LogPrefix} A batch of {MessageBatchCount} messages has been published to the queue.", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, messageBatch.Count);
         }
     }
 }
