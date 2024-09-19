@@ -20,7 +20,7 @@ public static class ConfigurationExtensions
     {
         services.Configure<AppInsightsConfig>(configuration.GetSection(AppInsightsConfig.SectionName));
         services.Configure<ServiceBusConfig>(configuration.GetSection(ServiceBusConfig.SectionName));
-        services.Configure<ServiceBusConfig>(configuration.GetSection(SubmissionsApiConfig.SectionName));
+        services.Configure<SubmissionsApiConfig>(configuration.GetSection(SubmissionsApiConfig.SectionName));
         return services;
     }
 
