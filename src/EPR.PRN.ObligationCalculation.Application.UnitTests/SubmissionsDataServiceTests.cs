@@ -134,30 +134,6 @@ public class SubmissionsDataServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(0, result.Count);
-    }
-
-    [TestMethod]
-    public async Task GetSubmissions_ShouldLogWarning_WhenNoSubmissionsDataFound()
-    {
-        // Arrange
-        var lastSuccessfulRunDate = "2023-09-01";
-        var endpoint = $"{_configMock.Object.Value.BaseUrl}{_configMock.Object.Value.EndPoint}{lastSuccessfulRunDate}";
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == endpoint),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(string.Empty)
-            });
-
-        // Act
-        var result = await _service.GetApprovedSubmissionsData(lastSuccessfulRunDate);
-
-        // Assert
         _loggerMock.Verify(l => l.Log(
             LogLevel.Warning,
             It.IsAny<EventId>(),
