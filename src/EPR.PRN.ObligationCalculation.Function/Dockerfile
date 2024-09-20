@@ -1,4 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
+# Copy everything
+COPY NuGet.Config ./
 
 COPY EPR.PRN.ObligationCalculation.Application/. ./EPR.PRN.ObligationCalculation.Application/.
 COPY EPR.PRN.ObligationCalculation.Function/. ./EPR.PRN.ObligationCalculation.Function/.
