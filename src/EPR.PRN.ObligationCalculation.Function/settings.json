@@ -13,6 +13,6 @@
         "ServiceBus__QueueName": "UseDevelopmentStorage=true",
         "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",
         "ApiConfig__DeveloperMode": false,
-        "StoreApprovedSubmissions__Schedule": "*/10 * * * * *"
+        "StoreApprovedSubmissions__Schedule": "0 */5 * * * *"
     }
 }
