@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Diagnostics.CodeAnalysis;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EPR.PRN.ObligationCalculation.Function.Tests;
 
@@ -19,7 +20,7 @@ public class StoreApprovedSubmissionsFunctionTests
     Mock<IConfiguration> configuration;
     Mock<IAppInsightsProvider> appInsightsProvider;
     Mock<IServiceBusProvider> serviceBusProvider;
-    Mock<StoreApprovedSubmissionsFunction> storeApprovedSubmissionsFunction;
+    StoreApprovedSubmissionsFunction storeApprovedSubmissionsFunction;
 
     DateTime approvedAfterDate;
     List<ApprovedSubmissionEntity> approvedSubmissionEntities;
@@ -57,16 +58,15 @@ public class StoreApprovedSubmissionsFunctionTests
 
         serviceBusProvider = new Mock<IServiceBusProvider>();
         serviceBusProvider.Setup(x => x.SendApprovedSubmissionsToQueue(approvedSubmissionEntities)).Returns(Task.CompletedTask);
+
+        storeApprovedSubmissionsFunction = new StoreApprovedSubmissionsFunction(logger.Object, configuration.Object,
+            submissionsDataService.Object, appInsightsProvider.Object, serviceBusProvider.Object);
     }
 
     [TestMethod()]
-    public async Task RunAsyncTest()
+    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsAreAvailable()
     {
         // Arrange
-        storeApprovedSubmissionsFunction = new Mock<StoreApprovedSubmissionsFunction>(logger.Object, configuration.Object,
-            submissionsDataService.Object, appInsightsProvider.Object, serviceBusProvider.Object);
-        var function = storeApprovedSubmissionsFunction.Object;
-
         TimerInfo timerInfo = new();
         timerInfo.IsPastDue = true;
         timerInfo.ScheduleStatus = new ScheduleStatus
@@ -77,9 +77,38 @@ public class StoreApprovedSubmissionsFunctionTests
         };
 
         // Act
-        await function.RunAsync(timerInfo);
+        await storeApprovedSubmissionsFunction.RunAsync(timerInfo);
 
         // Assert
         serviceBusProvider.Verify(x => x.SendApprovedSubmissionsToQueue(approvedSubmissionEntities), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task RunAsync_ShouldLogNoSubmissions_WhenNoSubmissionsAvailable()
+    {
+        // Arrange
+        var timerInfo = new TimerInfo();
+        var createdDate = DateTime.Now.AddDays(-1);
+        appInsightsProvider
+            .Setup(x => x.GetParameterForApprovedSubmissionsApiCall())
+            .ReturnsAsync(createdDate);
+        var approvedSubmissions = new List<ApprovedSubmissionEntity>();
+        submissionsDataService
+            .Setup(x => x.GetApprovedSubmissionsData(It.IsAny<string>()))
+            .ReturnsAsync(approvedSubmissions);
+        // Act
+        await storeApprovedSubmissionsFunction.RunAsync(timerInfo);
+
+        // Assert
+        logger.Verify(
+            l => l.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Exactly(2));
+
+        serviceBusProvider.Verify(x => x.SendApprovedSubmissionsToQueue(It.IsAny<List<ApprovedSubmissionEntity>>()), Times.Never);
     }
 }
