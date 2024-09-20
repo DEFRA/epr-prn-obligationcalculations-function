@@ -15,7 +15,7 @@ namespace EPR.PRN.ObligationCalculation.Function
 
         private readonly string LogPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
 
-        public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, IConfiguration configuration, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider, IServiceBusProvider serviceBusProvider)
+        public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider, IServiceBusProvider serviceBusProvider)
         {
             _logger = logger;
             _submissionsService = submissionsService;
@@ -28,8 +28,8 @@ namespace EPR.PRN.ObligationCalculation.Function
         {
             _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
 
-            var createdDate = _appInsightsProvider.GetParameterForApprovedSubmissionsApiCall().Result;
-            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(createdDate.ToString("yyyy-MM-dd"));
+            var lastSuccessfulRunDate = _appInsightsProvider.GetParameterForApprovedSubmissionsApiCall().Result;
+            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate.ToString("yyyy-MM-dd"));
 
             if (approvedSubmissionEntities.Count > 0)
             {

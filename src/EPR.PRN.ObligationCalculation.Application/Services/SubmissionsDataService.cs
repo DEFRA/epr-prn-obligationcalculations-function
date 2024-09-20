@@ -19,12 +19,10 @@ public class SubmissionsDataService : ISubmissionsDataService
         _config = config.Value;
     }
 
-    public async Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string approvedAfterDateString)
+    public async Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string lastSuccessfulRunDate)
     {
-        const string logMessageTemplate = ">>>>>>> Get Approved Submissions Data from {ApprovedAfterDateString} <<<<<<<<";
-        _logger.LogInformation(logMessageTemplate, approvedAfterDateString);
-
-        return await GetSubmissions(approvedAfterDateString);
+        _logger.LogInformation("{LogPrefix} >>>>>>> Get Approved Submissions Data from {ApprovedAfterDateString} <<<<<<<<", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, lastSuccessfulRunDate);
+        return await GetSubmissions(lastSuccessfulRunDate);
     }
 
     private async Task<List<ApprovedSubmissionEntity>> GetSubmissions(string approvedAfterDateString)

@@ -3,10 +3,12 @@ using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services
 {
+    [ExcludeFromCodeCoverage]
     public class ServiceBusProvider : IServiceBusProvider
     {
         private readonly ILogger<ServiceBusProvider> _logger;

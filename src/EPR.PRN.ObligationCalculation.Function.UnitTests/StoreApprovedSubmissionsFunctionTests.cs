@@ -1,86 +1,68 @@
 ﻿#nullable disable
 
+using AutoFixture;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.Diagnostics.CodeAnalysis;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EPR.PRN.ObligationCalculation.Function.Tests;
 
-[ExcludeFromCodeCoverage]
 [TestClass()]
 public class StoreApprovedSubmissionsFunctionTests
 {
-    Mock<ISubmissionsDataService> submissionsDataService;
-    Mock<ILogger<StoreApprovedSubmissionsFunction>> logger;
-    Mock<IConfiguration> configuration;
-    Mock<IAppInsightsProvider> appInsightsProvider;
-    Mock<IServiceBusProvider> serviceBusProvider;
-    StoreApprovedSubmissionsFunction storeApprovedSubmissionsFunction;
-
-    DateTime approvedAfterDate;
-    List<ApprovedSubmissionEntity> approvedSubmissionEntities;
+    private Fixture fixture;
+    private Mock<ISubmissionsDataService> _submissionsDataService;
+    private Mock<ILogger<StoreApprovedSubmissionsFunction>> _loggerMock;
+    private Mock<IAppInsightsProvider> _appInsightsProviderMock;
+    private Mock<IServiceBusProvider> _serviceBusProviderMock;
+    private StoreApprovedSubmissionsFunction _function;
 
     [TestInitialize]
     public void TestInitialize()
     {
-        approvedAfterDate = Convert.ToDateTime("2024-01-01");
-        approvedSubmissionEntities = new List<ApprovedSubmissionEntity>
-        {
-            new ApprovedSubmissionEntity {
-                SubmissionId = Guid.Empty,
-                PackagingMaterial = "PC",
-                PackagingMaterialWeight = 100,
-                SubmissionPeriod = "2024 P1",
-                OrganisationId = 1234
-            },
-            new ApprovedSubmissionEntity {
-                SubmissionId = Guid.Empty,
-                PackagingMaterial = "PL",
-                PackagingMaterialWeight = 200,
-                SubmissionPeriod = "2024 P2",
-                OrganisationId = 1234
-            }
-        };
-
-        logger = new Mock<ILogger<StoreApprovedSubmissionsFunction>>();
-        configuration = new Mock<IConfiguration>();
-
-        appInsightsProvider = new Mock<IAppInsightsProvider>();
-        appInsightsProvider.Setup(x => x.GetParameterForApprovedSubmissionsApiCall()).ReturnsAsync(approvedAfterDate);
-
-        submissionsDataService = new Mock<ISubmissionsDataService>();
-        submissionsDataService.Setup(x => x.GetApprovedSubmissionsData(approvedAfterDate.ToString("yyyy-MM-dd"))).ReturnsAsync(approvedSubmissionEntities);
-
-        serviceBusProvider = new Mock<IServiceBusProvider>();
-        serviceBusProvider.Setup(x => x.SendApprovedSubmissionsToQueue(approvedSubmissionEntities)).Returns(Task.CompletedTask);
-
-        storeApprovedSubmissionsFunction = new StoreApprovedSubmissionsFunction(logger.Object, configuration.Object,
-            submissionsDataService.Object, appInsightsProvider.Object, serviceBusProvider.Object);
+        fixture = new Fixture();
+        _loggerMock = new Mock<ILogger<StoreApprovedSubmissionsFunction>>();
+        _appInsightsProviderMock = new Mock<IAppInsightsProvider>();
+        _submissionsDataService = new Mock<ISubmissionsDataService>();
+        _serviceBusProviderMock = new Mock<IServiceBusProvider>();
+        _function = new StoreApprovedSubmissionsFunction(
+            _loggerMock.Object,
+            _submissionsDataService.Object,
+            _appInsightsProviderMock.Object,
+            _serviceBusProviderMock.Object);
     }
 
     [TestMethod()]
     public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsAreAvailable()
     {
         // Arrange
-        TimerInfo timerInfo = new();
-        timerInfo.IsPastDue = true;
-        timerInfo.ScheduleStatus = new ScheduleStatus
-        {
-            Last = DateTime.MinValue,
-            Next = DateTime.MinValue,
-            LastUpdated = DateTime.MinValue
-        };
-
+        var timerInfo = new TimerInfo();
+        var lastSuccessfulRunDate = Convert.ToDateTime("2024-01-01");
+        _appInsightsProviderMock
+            .Setup(x => x.GetParameterForApprovedSubmissionsApiCall())
+            .ReturnsAsync(lastSuccessfulRunDate);
+        var approvedSubmissionEntities = fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
+        _submissionsDataService
+            .Setup(x => x.GetApprovedSubmissionsData(lastSuccessfulRunDate.ToString("yyyy-MM-dd")))
+            .ReturnsAsync(approvedSubmissionEntities);
+        _serviceBusProviderMock
+            .Setup(x => x.SendApprovedSubmissionsToQueue(approvedSubmissionEntities))
+            .Returns(Task.CompletedTask);
         // Act
-        await storeApprovedSubmissionsFunction.RunAsync(timerInfo);
+        await _function.RunAsync(timerInfo);
 
         // Assert
-        serviceBusProvider.Verify(x => x.SendApprovedSubmissionsToQueue(approvedSubmissionEntities), Times.Once);
+        _loggerMock.Verify(
+                l => l.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.IsAny<It.IsAnyType>(),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Exactly(3));
+        _serviceBusProviderMock.Verify(x => x.SendApprovedSubmissionsToQueue(approvedSubmissionEntities), Times.Once);
     }
 
     [TestMethod]
@@ -88,19 +70,19 @@ public class StoreApprovedSubmissionsFunctionTests
     {
         // Arrange
         var timerInfo = new TimerInfo();
-        var createdDate = DateTime.Now.AddDays(-1);
-        appInsightsProvider
+        var lastSuccessfulRunDate = DateTime.Now.AddDays(-1);
+        _appInsightsProviderMock
             .Setup(x => x.GetParameterForApprovedSubmissionsApiCall())
-            .ReturnsAsync(createdDate);
+            .ReturnsAsync(lastSuccessfulRunDate);
         var approvedSubmissions = new List<ApprovedSubmissionEntity>();
-        submissionsDataService
+        _submissionsDataService
             .Setup(x => x.GetApprovedSubmissionsData(It.IsAny<string>()))
             .ReturnsAsync(approvedSubmissions);
         // Act
-        await storeApprovedSubmissionsFunction.RunAsync(timerInfo);
+        await _function.RunAsync(timerInfo);
 
         // Assert
-        logger.Verify(
+        _loggerMock.Verify(
             l => l.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
@@ -109,6 +91,36 @@ public class StoreApprovedSubmissionsFunctionTests
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()),
             Times.Exactly(2));
 
-        serviceBusProvider.Verify(x => x.SendApprovedSubmissionsToQueue(It.IsAny<List<ApprovedSubmissionEntity>>()), Times.Never);
+        _serviceBusProviderMock.Verify(x => x.SendApprovedSubmissionsToQueue(It.IsAny<List<ApprovedSubmissionEntity>>()), Times.Never);
+    }
+
+
+
+    [TestMethod]
+    [ExpectedException(typeof(Exception))]
+    public async Task RunAsync_ShouldHandleException_WhenErrorOccurs()
+    {
+        // Arrange
+        var timerInfo = new TimerInfo();
+        var lastSuccessfulRunDate = DateTime.Now.AddDays(-1);
+        _appInsightsProviderMock
+            .Setup(x => x.GetParameterForApprovedSubmissionsApiCall())
+            .ReturnsAsync(lastSuccessfulRunDate);
+        _submissionsDataService
+            .Setup(x => x.GetApprovedSubmissionsData(It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Test Exception"));
+
+        // Act
+        await _function.RunAsync(timerInfo);
+
+        // Assert
+        _loggerMock.Verify(
+            l => l.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.IsAny<It.IsAnyType>(),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.Once);
     }
 }

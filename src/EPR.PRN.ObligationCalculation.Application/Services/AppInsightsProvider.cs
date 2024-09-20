@@ -2,9 +2,11 @@
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services
 {
+    [ExcludeFromCodeCoverage]
     public class AppInsightsProvider : IAppInsightsProvider
     {
         private readonly ILogger<AppInsightsProvider> _logger;

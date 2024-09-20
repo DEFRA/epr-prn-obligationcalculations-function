@@ -4,5 +4,5 @@ namespace EPR.PRN.ObligationCalculation.Application.Services;
 
 public interface ISubmissionsDataService
 {
-    Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string approvedAfterDateString);
+    Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string lastSuccessfulRunDate);
 }
