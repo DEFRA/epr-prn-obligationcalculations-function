@@ -21,6 +21,9 @@ public class SubmissionsDataServiceTests
     private HttpClient _httpClient;
     private SubmissionsDataService _service;
 
+    private readonly string _lastSuccessfulRunDate = "2023-09-01";
+    private string _submissionsEndpoint = string.Empty;
+
     [TestInitialize]
     public void Setup()
     {
@@ -34,7 +37,8 @@ public class SubmissionsDataServiceTests
             EndPoint = "submissions"
         };
         _configMock.Setup(c => c.Value).Returns(config);
-
+        _submissionsEndpoint = $"{_configMock.Object.Value.BaseUrl}{_configMock.Object.Value.EndPoint}{_lastSuccessfulRunDate}";
+        
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
         _service = new SubmissionsDataService(_loggerMock.Object, _httpClient, _configMock.Object);
     }
@@ -43,11 +47,9 @@ public class SubmissionsDataServiceTests
     public async Task GetApprovedSubmissionsData_ShouldLogCorrectMessage()
     {
         // Arrange
-        var lastSuccessfulRunDate = "2023-09-01";
         var logPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
-        var expectedLogMessage = $"{logPrefix} >>>>>>> Get Approved Submissions Data from {lastSuccessfulRunDate} <<<<<<<<";
+        var expectedLogMessage = $"{logPrefix} >>>>>>> Get Approved Submissions Data from {_lastSuccessfulRunDate} <<<<<<<<";
 
-        // Mock successful HTTP response
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -67,7 +69,7 @@ public class SubmissionsDataServiceTests
             });
 
         // Act
-        await _service.GetApprovedSubmissionsData(lastSuccessfulRunDate);
+        await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert
         _loggerMock.Verify(
@@ -83,17 +85,13 @@ public class SubmissionsDataServiceTests
     public async Task GetSubmissions_ShouldReturnValidData_WhenApiResponseIsSuccessful()
     {
         // Arrange
-        var lastSuccessfulRunDate = "2023-09-01";
-        var endpoint = $"{_configMock.Object.Value.BaseUrl}{_configMock.Object.Value.EndPoint}{lastSuccessfulRunDate}";
-
-        // Mock HTTP response
-        var approvedSubmissions = new List<ApprovedSubmissionEntity> { new ApprovedSubmissionEntity { OrganisationId = 123 } };
+        var approvedSubmissions = new List<ApprovedSubmissionEntity> { new() { OrganisationId = 123 } };
         var jsonResponse = JsonConvert.SerializeObject(approvedSubmissions);
 
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == endpoint),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == _submissionsEndpoint),
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -102,7 +100,7 @@ public class SubmissionsDataServiceTests
             });
 
         // Act
-        var result = await _service.GetApprovedSubmissionsData(lastSuccessfulRunDate);
+        var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert
         Assert.IsNotNull(result);
@@ -111,16 +109,13 @@ public class SubmissionsDataServiceTests
     }
 
     [TestMethod]
-    public async Task GetSubmissions_ShouldReturnEmptyList_WhenApiResponseIsEmpty()
+    public async Task GetSubmissions_ShouldReturnEmptyList_WhenApiResponseIsEmptyString()
     {
         // Arrange
-        var lastSuccessfulRunDate = "2023-09-01";
-        var endpoint = $"{_configMock.Object.Value.BaseUrl}{_configMock.Object.Value.EndPoint}{lastSuccessfulRunDate}";
-
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == endpoint),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == _submissionsEndpoint),
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -129,7 +124,7 @@ public class SubmissionsDataServiceTests
             });
 
         // Act
-        var result = await _service.GetApprovedSubmissionsData(lastSuccessfulRunDate);
+        var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert
         Assert.IsNotNull(result);
@@ -143,23 +138,42 @@ public class SubmissionsDataServiceTests
     }
 
     [TestMethod]
+    public async Task GetSubmissions_ShouldReturnEmptyList_WhenApiResponseIsEmptyArray()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == _submissionsEndpoint),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("[]")
+            });
+
+        // Act
+        var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
+
+        // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(0, result.Count);
+    }
+
+    [TestMethod]
     [ExpectedException(typeof(Exception))]
     public async Task GetSubmissions_ShouldThrowException_WhenHttpClientThrowsException()
     {
         // Arrange
-        var lastSuccessfulRunDate = "2023-09-01";
-        var endpoint = $"{_configMock.Object.Value.BaseUrl}{_configMock.Object.Value.EndPoint}{lastSuccessfulRunDate}";
-
-        // Mock HTTP response to throw an exception
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == endpoint),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == _submissionsEndpoint),
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new Exception("Test Exception"));
 
         // Act
-        await _service.GetApprovedSubmissionsData(lastSuccessfulRunDate);
+        await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert handled by ExpectedException
     }

@@ -40,7 +40,7 @@ public class SubmissionsDataService : ISubmissionsDataService
             if (string.IsNullOrEmpty(result))
             {
                 _logger.LogWarning("{LogPrefix} No submissions data found for {ApprovedAfterDateString}", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, approvedAfterDateString);
-                return new List<ApprovedSubmissionEntity>();
+                return [];
             }
             else
             {
@@ -59,7 +59,6 @@ public class SubmissionsDataService : ISubmissionsDataService
     private async Task<string> GetDataAsync(string endpoint)
     {
         var response = await _httpClient.GetAsync(endpoint);
-
         return response.StatusCode.HasFlag(HttpStatusCode.OK) ? await response.Content.ReadAsStringAsync() : string.Empty;
     }
 }
