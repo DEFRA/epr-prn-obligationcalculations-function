@@ -1,33 +1,46 @@
+using EPR.PRN.ObligationCalculation.Application.Configs;
+using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace EPR.PRN.ObligationCalculation.Function
 {
     public class StoreApprovedSubmissionsFunction
     {
-        private readonly ILogger _logger;
-        private static string LogPrefix = "[StoreApprovedSubmissionsFunction]:";
-        private DateTime? CreatedDate = null;
+        private readonly ISubmissionsDataService _submissionsService;
+        private readonly IAppInsightsProvider _appInsightsProvider;
+        private readonly IServiceBusProvider _serviceBusProvider;
+        private readonly ILogger<StoreApprovedSubmissionsFunction> _logger;
 
-        public StoreApprovedSubmissionsFunction(ILoggerFactory loggerFactory)
+        private readonly string LogPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
+
+        public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider, IServiceBusProvider serviceBusProvider)
         {
-            _logger = loggerFactory.CreateLogger<StoreApprovedSubmissionsFunction>();
+            _logger = logger;
+            _submissionsService = submissionsService;
+            _appInsightsProvider = appInsightsProvider;
+            _serviceBusProvider = serviceBusProvider;
         }
 
-        [Function("Function1")]
-        public void Run([TimerTrigger("0 0 12 * * 1-5")] TimerInfo myTimer)
+        [Function("StoreApprovedSubmissionsFunction")]
+        public async Task RunAsync([TimerTrigger("%StoreApprovedSubmissions:Schedule%")] TimerInfo myTimer)
         {
-            _logger.LogInformation($"{LogPrefix} New session started");
+            _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
 
-            if (myTimer.ScheduleStatus is not null)
+            var lastSuccessfulRunDate = _appInsightsProvider.GetParameterForApprovedSubmissionsApiCall().Result;
+            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate.ToString("yyyy-MM-dd"));
+
+            if (approvedSubmissionEntities.Count > 0)
             {
-                _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
+                _logger.LogInformation("{LogPrefix} >>>>> Number of Submissions received : {ApprovedSubmissionEntitiesCount}", LogPrefix, approvedSubmissionEntities.Count);
+                await _serviceBusProvider.SendApprovedSubmissionsToQueue(approvedSubmissionEntities);
+                _logger.LogInformation("{LogPrefix} COMPLETED >>>>> Number of Submissions send to queue : {ApprovedSubmissionEntitiesCount}", LogPrefix, approvedSubmissionEntities.Count);
             }
-        }
-
-        public static DateTime GetCreatedDateFromLogs()
-        {
-            return DateTime.UtcNow;
+            else
+            {
+                _logger.LogInformation("{LogPrefix} COMPLETED >>>>> No new submissions received and send to queue <<<<< ", LogPrefix);
+            }
         }
     }
 }

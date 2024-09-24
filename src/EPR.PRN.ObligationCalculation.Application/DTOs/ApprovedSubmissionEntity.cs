@@ -1,5 +1,8 @@
-﻿namespace EPR.PRN.ObligationCalculation.Application.DTOs
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace EPR.PRN.ObligationCalculation.Application.DTOs
 {
+    [ExcludeFromCodeCoverage]
     public class ApprovedSubmissionEntity
     {
         public Guid SubmissionId { get; set; }
