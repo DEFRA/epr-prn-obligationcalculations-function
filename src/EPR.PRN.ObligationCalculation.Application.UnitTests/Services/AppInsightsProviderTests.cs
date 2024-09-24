@@ -1,4 +1,5 @@
 #nullable disable
+
 using Azure;
 using Azure.Monitor.Query;
 using EPR.PRN.ObligationCalculation.Application.Configs;
