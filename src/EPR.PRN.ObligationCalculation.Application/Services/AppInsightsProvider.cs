@@ -3,6 +3,7 @@ using EPR.PRN.ObligationCalculation.Application.Configs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services
 {
@@ -45,10 +46,10 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
             string query = $@"AppTraces
                          | where Message startswith '{logToFind}'
                          | order by TimeGenerated desc
-                         | project TimeGenerated, Message
+                         | project TimeGenerated
                          | limit 1";
             var response = await _logsQueryClient.QueryWorkspaceAsync(_config.WorkspaceId, query, TimeSpan.FromDays(1));
-            if (response.Value.Table.Rows.Count > 0)
+            if (response?.Value?.Table?.Rows?.Count > 0)
             {
                 var row = response.Value.Table.Rows[0];
                 return Convert.ToDateTime(row[TimeGenerated].ToString());

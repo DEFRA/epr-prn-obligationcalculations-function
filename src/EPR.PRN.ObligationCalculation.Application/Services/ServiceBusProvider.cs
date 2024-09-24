@@ -30,12 +30,13 @@ namespace EPR.PRN.ObligationCalculation.Application.Services
 
             var sender = _serviceBusClient.CreateSender(_config.QueueName);
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
+            var options = new JsonSerializerOptions { WriteIndented = true };
             foreach (var organisationId in organisationIds)
             {
                 var submissions = approvedSubmissionEntities.Where(s => s.OrganisationId == organisationId).ToList();
                 if (submissions.Count != 0)
                 {
-                    var jsonSumissions = JsonSerializer.Serialize(submissions, new JsonSerializerOptions { WriteIndented = true });
+                    var jsonSumissions = JsonSerializer.Serialize(submissions, options);
                     if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonSumissions)))
                     {
                         _logger.LogWarning("{LogPrefix} The message {OrganisationId} is too large to fit in the batch.", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, organisationId);

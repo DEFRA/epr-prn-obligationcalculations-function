@@ -1,5 +1,4 @@
 #nullable disable
-
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
@@ -10,7 +9,7 @@ using Moq.Protected;
 using Newtonsoft.Json;
 using System.Net;
 
-namespace EPR.PRN.ObligationCalculation.Application.UnitTests;
+namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
 
 [TestClass]
 public class SubmissionsDataServiceTests
@@ -38,7 +37,7 @@ public class SubmissionsDataServiceTests
         };
         _configMock.Setup(c => c.Value).Returns(config);
         _submissionsEndpoint = $"{_configMock.Object.Value.BaseUrl}{_configMock.Object.Value.EndPoint}{_lastSuccessfulRunDate}";
-        
+
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
         _service = new SubmissionsDataService(_loggerMock.Object, _httpClient, _configMock.Object);
     }
