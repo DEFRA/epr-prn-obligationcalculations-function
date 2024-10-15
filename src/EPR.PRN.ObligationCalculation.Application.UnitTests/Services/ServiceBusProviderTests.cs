@@ -45,7 +45,7 @@ public class ServiceBusProviderTests
     public async Task SendApprovedSubmissionsToQueue_Success()
     {
         // Arrange
-        var messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(1000, []);
+        var messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(500, []);
 
         _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
@@ -69,25 +69,30 @@ public class ServiceBusProviderTests
     }
 
     [TestMethod]
-    public async Task SendApprovedSubmissionsToQueue_MessageTooLarge_Warns()
+    public async Task SendApprovedSubmissionsToQueue_MessageTooMany_Warns()
     {
         // Arrange
-        var messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(1000, []);
-        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-        messageBatch.TryAddMessage(new ServiceBusMessage());
         var approvedSubmissions = fixture.Build<ApprovedSubmissionEntity>()
             .With(x => x.OrganisationId, 123)
-            .CreateMany(1000)
+            .CreateMany(10)
             .ToList();
+        int messageCountThreshold = 1;
+        List<ServiceBusMessage> messageList = [];
+        messageList.Add(new ServiceBusMessage());
+        ServiceBusMessageBatch messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(
+            batchSizeBytes: 500,
+            batchMessageStore: messageList,
+            batchOptions: new CreateMessageBatchOptions(),
+            tryAddCallback: _ => messageList.Count < messageCountThreshold);
+        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
         // Act
         await _serviceBusProvider.SendApprovedSubmissionsToQueue(approvedSubmissions);
-
 
         // Assert
         _loggerMock.Verify(
                 l => l.Log(
-                    LogLevel.Information,
+                    LogLevel.Warning,
                     It.IsAny<EventId>(),
                     It.IsAny<It.IsAnyType>(),
                     It.IsAny<Exception>(),
