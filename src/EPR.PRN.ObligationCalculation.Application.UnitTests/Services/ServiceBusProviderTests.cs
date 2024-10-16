@@ -16,7 +16,6 @@ public class ServiceBusProviderTests
     private Mock<ILogger<ServiceBusProvider>> _loggerMock;
     private Mock<ServiceBusClient> _serviceBusClientMock;
     private Mock<IOptions<ServiceBusConfig>> _configMock;
-
     private Mock<ServiceBusSender> _serviceBusSenderMock;
     private ServiceBusProvider _serviceBusProvider;
     private Fixture fixture;

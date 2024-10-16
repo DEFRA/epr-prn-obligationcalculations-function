@@ -25,8 +25,8 @@ namespace EPR.PRN.ObligationCalculation.Function
         {
             _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
 
-            var lastSuccessfulRunDate = DateTime.Now.Date; // Get using lastrun GET endpoint
-            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate.ToString("yyyy-MM-dd"));
+            var lastSuccessfulRunDate = "2024-01-01"; // Get using lastrun GET endpoint
+            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
 
             if (approvedSubmissionEntities.Count > 0)
             {

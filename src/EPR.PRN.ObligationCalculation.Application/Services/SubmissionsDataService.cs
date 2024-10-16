@@ -12,6 +12,7 @@ public class SubmissionsDataService : ISubmissionsDataService
     private readonly ILogger<SubmissionsDataService> _logger;
     private readonly HttpClient _httpClient;
     private readonly SubmissionsApiConfig _config;
+
     public SubmissionsDataService(ILogger<SubmissionsDataService> logger, HttpClient httpClient, IOptions<SubmissionsApiConfig> config)
     {
         _logger = logger;
