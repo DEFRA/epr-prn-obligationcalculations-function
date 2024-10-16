@@ -1,12 +1,10 @@
 #nullable disable
 using EPR.PRN.ObligationCalculation.Application.Configs;
-using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
-using Newtonsoft.Json;
 using System.Net;
 
 namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
@@ -15,7 +13,7 @@ namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
 public class SubmissionsDataServiceTests
 {
     private Mock<ILogger<SubmissionsDataService>> _loggerMock;
-    private Mock<IOptions<SubmissionsApiConfig>> _configMock;
+    private Mock<IOptions<CommonDataApiConfig>> _configMock;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private HttpClient _httpClient;
     private SubmissionsDataService _service;
@@ -27,23 +25,23 @@ public class SubmissionsDataServiceTests
     public void Setup()
     {
         _loggerMock = new Mock<ILogger<SubmissionsDataService>>();
-        _configMock = new Mock<IOptions<SubmissionsApiConfig>>();
+        _configMock = new Mock<IOptions<CommonDataApiConfig>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
 
-        var config = new SubmissionsApiConfig
+        var config = new CommonDataApiConfig
         {
             BaseUrl = "https://api.example.com/",
-            EndPoint = "submissions"
+            SubmissionsEndPoint = "submissions"
         };
         _configMock.Setup(c => c.Value).Returns(config);
-        _submissionsEndpoint = $"{_configMock.Object.Value.BaseUrl}{_configMock.Object.Value.EndPoint}{_lastSuccessfulRunDate}";
+        _submissionsEndpoint = $"{_configMock.Object.Value.BaseUrl}{_configMock.Object.Value.SubmissionsEndPoint}{_lastSuccessfulRunDate}";
 
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
         _service = new SubmissionsDataService(_loggerMock.Object, _httpClient, _configMock.Object);
     }
 
     [TestMethod]
-    public async Task GetApprovedSubmissionsData_ShouldLogCorrectMessage()
+    public async Task GetSubmissions_ShouldReturnValidData_WhenApiResponseIsSuccessful()
     {
         // Arrange
         var logPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
@@ -52,7 +50,7 @@ public class SubmissionsDataServiceTests
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == _submissionsEndpoint),
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -68,9 +66,12 @@ public class SubmissionsDataServiceTests
             });
 
         // Act
-        await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
+        var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert
+        Assert.IsNotNull(result);
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(123, result[0].OrganisationId);
         _loggerMock.Verify(
             l => l.Log(
                 LogLevel.Information,
@@ -78,33 +79,6 @@ public class SubmissionsDataServiceTests
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
                 null,
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()));
-    }
-
-    [TestMethod]
-    public async Task GetSubmissions_ShouldReturnValidData_WhenApiResponseIsSuccessful()
-    {
-        // Arrange
-        var approvedSubmissions = new List<ApprovedSubmissionEntity> { new() { OrganisationId = 123 } };
-        var jsonResponse = JsonConvert.SerializeObject(approvedSubmissions);
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == _submissionsEndpoint),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(jsonResponse)
-            });
-
-        // Act
-        var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
-
-        // Assert
-        Assert.IsNotNull(result);
-        Assert.AreEqual(1, result.Count);
-        Assert.AreEqual(123, result[0].OrganisationId);
     }
 
     [TestMethod]
@@ -118,37 +92,8 @@ public class SubmissionsDataServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.OK,
+                StatusCode = HttpStatusCode.NotFound,
                 Content = new StringContent(string.Empty)
-            });
-
-        // Act
-        var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
-
-        // Assert
-        Assert.IsNotNull(result);
-        Assert.AreEqual(0, result.Count);
-        _loggerMock.Verify(l => l.Log(
-            LogLevel.Warning,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("No submissions data found")),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()));
-    }
-
-    [TestMethod]
-    public async Task GetSubmissions_ShouldReturnEmptyList_WhenApiResponseIsEmptyArray()
-    {
-        // Arrange
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri.ToString() == _submissionsEndpoint),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("[]")
             });
 
         // Act
@@ -164,6 +109,9 @@ public class SubmissionsDataServiceTests
     public async Task GetSubmissions_ShouldThrowException_WhenHttpClientThrowsException()
     {
         // Arrange
+        var logPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
+        var expectedLogMessage = $"{logPrefix}  Error while getting submissions data";
+
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -175,5 +123,12 @@ public class SubmissionsDataServiceTests
         await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert handled by ExpectedException
+        _loggerMock.Verify(
+            l => l.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
+                null,
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()));
     }
 }

@@ -3,10 +3,10 @@
 namespace EPR.PRN.ObligationCalculation.Application.Configs;
 
 [ExcludeFromCodeCoverage]
-public class SubmissionsApiConfig
+public class CommonBackendApiConfig
 {
 
-    public const string SectionName = "Submissions";
+    public const string SectionName = "CommonBackendApi";
     public string BaseUrl { get; set; } = null!;
-    public string EndPoint { get; set; } = null!;
+    public string PrnCalculateEndPoint { get; set; } = null!;
 }

@@ -8,15 +8,17 @@ namespace EPR.PRN.ObligationCalculation.Function
     public class StoreApprovedSubmissionsFunction
     {
         private readonly ISubmissionsDataService _submissionsService;
+        private readonly IAppInsightsProvider _appInsightsProvider;
         private readonly IServiceBusProvider _serviceBusProvider;
         private readonly ILogger<StoreApprovedSubmissionsFunction> _logger;
 
         private readonly string LogPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
 
-        public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider)
+        public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider, IServiceBusProvider serviceBusProvider)
         {
             _logger = logger;
             _submissionsService = submissionsService;
+            _appInsightsProvider = appInsightsProvider;
             _serviceBusProvider = serviceBusProvider;
         }
 
@@ -25,8 +27,8 @@ namespace EPR.PRN.ObligationCalculation.Function
         {
             _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
 
-            var lastSuccessfulRunDate = "2024-01-01"; // Get using lastrun GET endpoint
-            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
+            var lastSuccessfulRunDate = _appInsightsProvider.GetParameterForApprovedSubmissionsApiCall().Result;
+            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate.ToString("yyyy-MM-dd"));
 
             if (approvedSubmissionEntities.Count > 0)
             {
@@ -38,7 +40,6 @@ namespace EPR.PRN.ObligationCalculation.Function
             {
                 _logger.LogInformation("{LogPrefix} COMPLETED >>>>> No new submissions received and send to queue <<<<< ", LogPrefix);
             }
-            // Update lastrun date using PUT endpoint
         }
     }
 }

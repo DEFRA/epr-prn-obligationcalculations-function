@@ -11,9 +11,9 @@ public class SubmissionsDataService : ISubmissionsDataService
 {
     private readonly ILogger<SubmissionsDataService> _logger;
     private readonly HttpClient _httpClient;
-    private readonly SubmissionsApiConfig _config;
+    private readonly CommonDataApiConfig _config;
 
-    public SubmissionsDataService(ILogger<SubmissionsDataService> logger, HttpClient httpClient, IOptions<SubmissionsApiConfig> config)
+    public SubmissionsDataService(ILogger<SubmissionsDataService> logger, HttpClient httpClient, IOptions<CommonDataApiConfig> config)
     {
         _logger = logger;
         _httpClient = httpClient;
@@ -29,7 +29,7 @@ public class SubmissionsDataService : ISubmissionsDataService
     private async Task<List<ApprovedSubmissionEntity>> GetSubmissions(string approvedAfterDateString)
     {
         string _submissionsBaseUrl = _config.BaseUrl;
-        string _submissionsEndPoint = _config.EndPoint;
+        string _submissionsEndPoint = _config.SubmissionsEndPoint;
 
         string endpoint = _submissionsBaseUrl + _submissionsEndPoint + approvedAfterDateString;
         _logger.LogInformation("{logPrefix} Fetching Submissions data from: {Endpoint}", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, endpoint);
@@ -37,18 +37,8 @@ public class SubmissionsDataService : ISubmissionsDataService
         try
         {
             var result = await GetDataAsync(endpoint);
-
-            if (string.IsNullOrEmpty(result))
-            {
-                _logger.LogWarning("{LogPrefix} No submissions data found for {ApprovedAfterDateString}", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, approvedAfterDateString);
-                return [];
-            }
-            else
-            {
-                _logger.LogInformation("{LogPrefix} Submissions data: {Result}", ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix, result);
-
-                return JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(result) ?? [];
-            }
+            var submissionEntities = JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(result);
+            return submissionEntities ?? [];
         }
         catch (Exception ex)
         {
