@@ -46,7 +46,7 @@ public class AppInsightsProvider : IAppInsightsProvider
                          | project TimeGenerated
                          | limit 1";
         var response = await _logsQueryClient.QueryWorkspaceAsync(_config.WorkspaceId, query, TimeSpan.FromDays(1));
-        if (response?.Value?.Table?.Rows?.Count > 0)
+        if (response.Value.Table.Rows.Count > 0)
         {
             var row = response.Value.Table.Rows[0];
             return Convert.ToDateTime(row[TimeGenerated].ToString());
