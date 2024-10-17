@@ -8,17 +8,15 @@ namespace EPR.PRN.ObligationCalculation.Function;
 public class StoreApprovedSubmissionsFunction
 {
     private readonly ISubmissionsDataService _submissionsService;
-    private readonly IAppInsightsProvider _appInsightsProvider;
     private readonly IServiceBusProvider _serviceBusProvider;
     private readonly ILogger<StoreApprovedSubmissionsFunction> _logger;
 
     private readonly string LogPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
 
-    public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IAppInsightsProvider appInsightsProvider, IServiceBusProvider serviceBusProvider)
+    public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider)
     {
         _logger = logger;
         _submissionsService = submissionsService;
-        _appInsightsProvider = appInsightsProvider;
         _serviceBusProvider = serviceBusProvider;
     }
 
@@ -27,8 +25,8 @@ public class StoreApprovedSubmissionsFunction
     {
         _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
 
-        var lastSuccessfulRunDate = _appInsightsProvider.GetParameterForApprovedSubmissionsApiCall().Result;
-        var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate.ToString("yyyy-MM-dd"));
+        var lastSuccessfulRunDate = "2024-01-01";
+        var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
 
         if (approvedSubmissionEntities.Count > 0)
         {

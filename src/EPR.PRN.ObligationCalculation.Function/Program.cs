@@ -21,7 +21,6 @@ namespace EPR.PRN.ObligationCalculation.Function
             services.ConfigureFunctionsApplicationInsights();
             services.AddHttpClient();
             services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
-            services.AddScoped<IAppInsightsProvider, AppInsightsProvider>();
             services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
             services.ConfigureOptions(hostingContext.Configuration);
             services.AddHttpClients();
