@@ -1,9 +1,8 @@
 ﻿using EPR.PRN.ObligationCalculation.Application.DTOs;
 
-namespace EPR.PRN.ObligationCalculation.Application.Services
+namespace EPR.PRN.ObligationCalculation.Application.Services;
+
+public interface IServiceBusProvider
 {
-    public interface IServiceBusProvider
-    {
-        Task SendApprovedSubmissionsToQueue(List<ApprovedSubmissionEntity> approvedSubmissionEntities);
-    }
+    Task SendApprovedSubmissionsToQueue(List<ApprovedSubmissionEntity> approvedSubmissionEntities);
 }

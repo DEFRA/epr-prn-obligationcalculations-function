@@ -1,7 +1,6 @@
-﻿namespace EPR.PRN.ObligationCalculation.Application.Services
+﻿namespace EPR.PRN.ObligationCalculation.Application.Services;
+
+public interface IAppInsightsProvider
 {
-    public interface IAppInsightsProvider
-    {
-        Task<DateTime> GetParameterForApprovedSubmissionsApiCall();
-    }
+    Task<DateTime> GetParameterForApprovedSubmissionsApiCall();
 }
