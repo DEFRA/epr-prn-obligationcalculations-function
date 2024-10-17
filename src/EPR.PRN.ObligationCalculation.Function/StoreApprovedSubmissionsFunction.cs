@@ -1,33 +1,42 @@
+using EPR.PRN.ObligationCalculation.Application.Configs;
+using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
-namespace EPR.PRN.ObligationCalculation.Function
+namespace EPR.PRN.ObligationCalculation.Function;
+
+public class StoreApprovedSubmissionsFunction
 {
-    public class StoreApprovedSubmissionsFunction
+    private readonly ISubmissionsDataService _submissionsService;
+    private readonly IServiceBusProvider _serviceBusProvider;
+    private readonly ILogger<StoreApprovedSubmissionsFunction> _logger;
+
+    private readonly string LogPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
+
+    public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider)
     {
-        private readonly ILogger _logger;
-        private static string LogPrefix = "[StoreApprovedSubmissionsFunction]:";
-        private DateTime? CreatedDate = null;
+        _logger = logger;
+        _submissionsService = submissionsService;
+        _serviceBusProvider = serviceBusProvider;
+    }
 
-        public StoreApprovedSubmissionsFunction(ILoggerFactory loggerFactory)
+    [Function("StoreApprovedSubmissionsFunction")]
+    public async Task RunAsync([TimerTrigger("%StoreApprovedSubmissions:Schedule%")] TimerInfo myTimer)
+    {
+        _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
+
+        var lastSuccessfulRunDate = "2024-01-01";
+        var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
+
+        if (approvedSubmissionEntities.Count > 0)
         {
-            _logger = loggerFactory.CreateLogger<StoreApprovedSubmissionsFunction>();
+            _logger.LogInformation("{LogPrefix} >>>>> Number of Submissions received : {ApprovedSubmissionEntitiesCount}", LogPrefix, approvedSubmissionEntities.Count);
+            await _serviceBusProvider.SendApprovedSubmissionsToQueue(approvedSubmissionEntities);
+            _logger.LogInformation("{LogPrefix} COMPLETED >>>>> Number of Submissions send to queue : {ApprovedSubmissionEntitiesCount}", LogPrefix, approvedSubmissionEntities.Count);
         }
-
-        [Function("Function1")]
-        public void Run([TimerTrigger("0 0 12 * * 1-5")] TimerInfo myTimer)
+        else
         {
-            _logger.LogInformation($"{LogPrefix} New session started");
-
-            if (myTimer.ScheduleStatus is not null)
-            {
-                _logger.LogInformation($"Next timer schedule at: {myTimer.ScheduleStatus.Next}");
-            }
-        }
-
-        public static DateTime GetCreatedDateFromLogs()
-        {
-            return DateTime.UtcNow;
+            _logger.LogInformation("{LogPrefix} COMPLETED >>>>> No new submissions received and send to queue <<<<< ", LogPrefix);
         }
     }
 }
