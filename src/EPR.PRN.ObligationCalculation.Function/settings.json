@@ -1,0 +1,16 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        "CommonDataApi__BaseUrl": "UseDevelopmentStorage=true",
+        "CommonDataApi__SubmissionsEndPoint": "UseDevelopmentStorage=true",
+        "CommonBackendApi__BaseUrl": "UseDevelopmentStorage=true",
+        "CommonBackendApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
+        "ServiceBus__Namespace": "UseDevelopmentStorage=true",
+        "ServiceBus__QueueName": "UseDevelopmentStorage=true",
+        "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",
+        "ApiConfig__DeveloperMode": false,
+        "StoreApprovedSubmissions__Schedule": "0 */5 * * * *"
+    }
+}
