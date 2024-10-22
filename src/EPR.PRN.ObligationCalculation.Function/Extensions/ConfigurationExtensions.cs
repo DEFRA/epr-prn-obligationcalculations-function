@@ -65,6 +65,13 @@ public static class ConfigurationExtensions
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         });
 
+        services.AddHttpClient<IPrnService, PrnService>((sp, c) =>
+        {
+            var config = sp.GetRequiredService<IOptions<CommonBackendApiConfig>>().Value;
+            c.BaseAddress = new Uri(config.BaseUrl);
+            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+
         return services;
     }
 }

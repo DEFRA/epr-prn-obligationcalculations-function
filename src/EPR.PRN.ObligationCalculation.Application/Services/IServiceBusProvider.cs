@@ -4,5 +4,6 @@ namespace EPR.PRN.ObligationCalculation.Application.Services;
 
 public interface IServiceBusProvider
 {
-    Task SendApprovedSubmissionsToQueue(List<ApprovedSubmissionEntity> approvedSubmissionEntities);
+    Task SendApprovedSubmissionsToQueueAsync(List<ApprovedSubmissionEntity> approvedSubmissionEntities);
+    Task ReceiveAndProcessMessagesFromQueueAsync();
 }

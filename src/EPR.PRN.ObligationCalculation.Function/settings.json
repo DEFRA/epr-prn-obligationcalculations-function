@@ -7,10 +7,12 @@
         "CommonDataApi__SubmissionsEndPoint": "UseDevelopmentStorage=true",
         "CommonBackendApi__BaseUrl": "UseDevelopmentStorage=true",
         "CommonBackendApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
+        "CommonBackendApi__LastSuccessfulRunDateEndPoint": "UseDevelopmentStorage=true",
         "ServiceBus__Namespace": "UseDevelopmentStorage=true",
         "ServiceBus__QueueName": "UseDevelopmentStorage=true",
         "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",
         "ApiConfig__DeveloperMode": false,
-        "StoreApprovedSubmissions__Schedule": "0 */5 * * * *"
+        "StoreApprovedSubmissions__Schedule": "0 */5 * * * *",
+        "ProcessApprovedSubmissions__Schedule": "0 */5 * * * *"
     }
 }
