@@ -131,11 +131,16 @@ public class ServiceBusProviderTests
     }
 
     [TestMethod]
+    [ExpectedException(typeof(Exception))]
     public async Task SendApprovedSubmissionsToQueueAsync_ShouldThrowError_WHenClientFails()
     {
         // Arrange
-        var approvedSubmissions = new List<ApprovedSubmissionEntity>();
-        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ThrowsAsync(new Exception("error"));
+        var approvedSubmissions = fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
+
+        var messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(500, []);
+
+        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Throws(new Exception("error"));
 
         // Act
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
@@ -143,7 +148,7 @@ public class ServiceBusProviderTests
         // Assert
         _loggerMock.Verify(
                 l => l.Log(
-                    LogLevel.Information,
+                    LogLevel.Error,
                     It.IsAny<EventId>(),
                     It.IsAny<It.IsAnyType>(),
                     It.IsAny<Exception>(),
@@ -226,6 +231,26 @@ public class ServiceBusProviderTests
 
         // Assert
         _mockReceiver.Verify(r => r.DisposeAsync(), Times.Once);  // Ensure receiver is disposed
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(Exception))]
+    public async Task ReceiveAndProcessMessagesFromQueueAsync_ShouldThrowException()
+    {
+        // Arrange
+        _mockReceiver.Setup(r => r.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("error"));
+
+        // Act
+        await _serviceBusProvider.ReceiveAndProcessMessagesFromQueueAsync();
+
+        // Assert
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
     }
 
     // Helper method to create a real ServiceBusReceivedMessage using ServiceBusModelFactory
