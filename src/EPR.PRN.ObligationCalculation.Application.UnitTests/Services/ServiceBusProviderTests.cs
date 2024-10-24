@@ -163,8 +163,7 @@ public class ServiceBusProviderTests
 
         int numCallsCompleteMessage = 0;
         _serviceBusReceiverMock
-            .Setup(receiver => receiver.CompleteMessageAsync(
-                It.IsAny<ServiceBusReceivedMessage>(),
+            .Setup(receiver => receiver.CompleteMessageAsync(message,
                 It.IsAny<CancellationToken>())).Callback(() => numCallsCompleteMessage++)
             .Returns(Task.CompletedTask);
 
