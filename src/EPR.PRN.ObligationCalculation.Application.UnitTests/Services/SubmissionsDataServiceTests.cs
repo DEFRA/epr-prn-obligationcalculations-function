@@ -75,13 +75,12 @@ public class SubmissionsDataServiceTests
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.Count);
         Assert.AreEqual(123, result[0].OrganisationId);
-        _loggerMock.Verify(
-            l => l.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()));
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()));
     }
 
     [TestMethod]
@@ -125,12 +124,11 @@ public class SubmissionsDataServiceTests
         await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert handled by ExpectedException
-        _loggerMock.Verify(
-            l => l.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
-                null,
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()));
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()));
     }
 }

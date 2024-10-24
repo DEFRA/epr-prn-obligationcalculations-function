@@ -128,14 +128,12 @@ public class PrnServiceTests
         await _prnService.ProcessApprovedSubmission(emptySubmission);
 
         // Assert
-        _loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Exactly(1));
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(1));
     }
 
     [TestMethod]

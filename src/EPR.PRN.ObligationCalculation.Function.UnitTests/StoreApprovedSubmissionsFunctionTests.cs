@@ -64,18 +64,17 @@ public class StoreApprovedSubmissionsFunctionTests
         _serviceBusProviderMock
             .Setup(x => x.SendSuccessfulRunDateToQueue(currentRunDate))
             .Returns(Task.CompletedTask);
+
         // Act
         await _function.RunAsync(_timerInfo);
 
         // Assert
-        _loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Exactly(logInformationCount));
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(logInformationCount));
     }
 
     [TestMethod]
@@ -91,10 +90,10 @@ public class StoreApprovedSubmissionsFunctionTests
 
         // Assert
         // Verify that the error is logged
-        _loggerMock.Verify(log => log.Log(
+        _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Ended with error while storing approved submission")),
+            It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
     }

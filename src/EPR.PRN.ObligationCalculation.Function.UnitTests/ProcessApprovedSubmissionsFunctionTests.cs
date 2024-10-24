@@ -33,7 +33,7 @@ public class ProcessApprovedSubmissionsFunctionTests
 
         // Assert
         _prnServiceMock.Verify(service => service.ProcessApprovedSubmission("test-message-body"), Times.Once);
-        _loggerMock.Verify(logger => logger.Log(
+        _loggerMock.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
@@ -53,7 +53,7 @@ public class ProcessApprovedSubmissionsFunctionTests
         // Act & Assert
         await Assert.ThrowsExceptionAsync<Exception>(() => _function.RunAsync(serviceBusMessage));
 
-        _loggerMock.Verify(logger => logger.Log(
+        _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),

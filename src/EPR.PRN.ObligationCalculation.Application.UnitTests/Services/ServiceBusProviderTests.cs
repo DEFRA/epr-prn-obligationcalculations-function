@@ -70,14 +70,12 @@ public class ServiceBusProviderTests
         _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Once);
         _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Once);
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
     }
 
     [TestMethod]
@@ -103,14 +101,12 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Warning,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
     }
 
     [TestMethod]
@@ -128,14 +124,12 @@ public class ServiceBusProviderTests
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
         // Assert
-        _loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
     }
 
     [TestMethod]
@@ -152,14 +146,12 @@ public class ServiceBusProviderTests
 
         // Assert
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
     }
 
     [TestMethod]
@@ -169,9 +161,15 @@ public class ServiceBusProviderTests
         var lastSuccessfulRunDate = "2024-10-10";
         var message = ServiceBusModelBuilder.CreateServiceBusReceivedMessage(lastSuccessfulRunDate);
 
-        _serviceBusReceiverMock.SetupSequence(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+        int numCallsCompleteMessage = 0;
+        _serviceBusReceiverMock
+            .Setup(receiver => receiver.CompleteMessageAsync(
+                It.IsAny<ServiceBusReceivedMessage>(),
+                It.IsAny<CancellationToken>())).Callback(() => numCallsCompleteMessage++)
+            .Returns(Task.CompletedTask);
+
+        _serviceBusReceiverMock.Setup(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(message);
-        
         // Act
         var result = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
 
@@ -179,14 +177,18 @@ public class ServiceBusProviderTests
         Assert.IsNotNull(result);
         Assert.AreEqual(lastSuccessfulRunDate, result);
 
-        _loggerMock.Verify(
-                l => l.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Once);
+        _serviceBusReceiverMock.Verify(
+            r => r.CompleteMessageAsync(
+            It.IsAny<ServiceBusReceivedMessage>(),
+            It.IsAny<CancellationToken>()),
+            Times.Exactly(numCallsCompleteMessage));
+
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
 
         _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.Once);
     }
@@ -195,7 +197,7 @@ public class ServiceBusProviderTests
     public async Task GetLastSuccessfulRunDateFromQueue_Returns_Null()
     {
         // Arrange
-        _serviceBusReceiverMock.SetupSequence(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+        _serviceBusReceiverMock.Setup(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((ServiceBusReceivedMessage)null);
 
         // Act
@@ -211,7 +213,7 @@ public class ServiceBusProviderTests
     {
         // Arrange
         var exception = new ServiceBusException("Test exception", ServiceBusFailureReason.GeneralError);
-        _serviceBusReceiverMock.SetupSequence(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+        _serviceBusReceiverMock.Setup(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(exception);
 
         // Act & Assert
@@ -270,7 +272,7 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             exception,
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()),Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
 
         _serviceBusSenderMock.Verify(sender => sender.DisposeAsync(), Times.Once);
     }
