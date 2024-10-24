@@ -22,7 +22,6 @@ public class ServiceBusProviderTests
     private Mock<ServiceBusReceiver> _serviceBusReceiverMock;
     private Fixture fixture;
 
-
     [TestInitialize]
     public void TestInitialize()
     {
@@ -177,10 +176,19 @@ public class ServiceBusProviderTests
         var result = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
 
         // Assert
-        _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.Once);
         Assert.IsNotNull(result);
         Assert.AreEqual(lastSuccessfulRunDate, result);
 
+        _loggerMock.Verify(
+                l => l.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.IsAny<It.IsAnyType>(),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
+
+        _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.Once);
     }
 
     [TestMethod]
@@ -197,8 +205,6 @@ public class ServiceBusProviderTests
         _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.Once);
         Assert.IsNull(result);
     }
-
-
 
     [TestMethod]
     public async Task GetLastSuccessfulRunDateFromQueue_ThrowsException()

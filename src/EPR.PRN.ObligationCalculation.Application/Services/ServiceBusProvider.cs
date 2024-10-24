@@ -75,7 +75,6 @@ public class ServiceBusProvider : IServiceBusProvider
             string lastRunDate = message.Body.ToString();
             await receiver.CompleteMessageAsync(message);
             _logger.LogInformation("[{LogPrefix}]: Last run date {Date} received from queue", _logPrefix, lastRunDate);
-
             return lastRunDate;
         }
         catch (ServiceBusException ex)
