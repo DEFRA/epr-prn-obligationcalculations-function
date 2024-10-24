@@ -25,8 +25,9 @@ public class ProcessApprovedSubmissionsFunction
         {
             _logger.LogInformation("[{LogPrefix}]: Received message with ID: {MessageId}", _logPrefix, message.MessageId);
             string messageBody = message.Body.ToString();
-            _logger.LogInformation("[{LogPrefix}]: Message body: {MessageBody}", _logPrefix, messageBody);
             await _prnService.ProcessApprovedSubmission(messageBody);
+            _logger.LogInformation("[{LogPrefix}]: Processed message with ID: {MessageId}", _logPrefix, message.MessageId);
+
         }
         catch (Exception ex)
         {

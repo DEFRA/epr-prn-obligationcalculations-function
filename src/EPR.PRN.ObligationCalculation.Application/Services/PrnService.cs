@@ -53,7 +53,6 @@ public class PrnService : IPrnService
                 var response = await _httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissions);
                 response.EnsureSuccessStatusCode();
                 _logger.LogInformation("[{LogPrefix}]: Submissions message is posted to backend", _logPrefix);
-
             }
         }
     }

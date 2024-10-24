@@ -14,7 +14,6 @@
         "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",
         "ApplicationConfig__DeveloperMode": false,
         "ApplicationConfig__DefaultRunDate": "UseDevelopmentStorage=true",
-        "StoreApprovedSubmissions__Schedule": "0 */5 * * * *",
-        "ProcessApprovedSubmissions__Schedule": "0 */5 * * * *"
+        "StoreApprovedSubmissions__Schedule": "0 */5 * * * *"
     }
 }
