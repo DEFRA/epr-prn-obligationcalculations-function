@@ -129,7 +129,6 @@ public class ServiceBusProviderTests
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
         // Assert
-        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
         _loggerMock.Verify(
                 l => l.Log(
                     LogLevel.Information,
@@ -147,11 +146,8 @@ public class ServiceBusProviderTests
         // Arrange
         var approvedSubmissions = fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
 
-        var messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(500, []);
-
-        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Throws(new Exception("error"));
-
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ThrowsAsync(new Exception("error"));
         // Act
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 

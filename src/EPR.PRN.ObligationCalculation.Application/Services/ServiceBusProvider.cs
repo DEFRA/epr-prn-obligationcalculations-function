@@ -23,7 +23,6 @@ public class ServiceBusProvider : IServiceBusProvider
     }
     public async Task SendApprovedSubmissionsToQueueAsync(List<ApprovedSubmissionEntity> approvedSubmissionEntities)
     {
-        var sender = _serviceBusClient.CreateSender(_config.ObligationQueueName);
         try
         {
             if (approvedSubmissionEntities.Count == 0)
@@ -36,6 +35,7 @@ public class ServiceBusProvider : IServiceBusProvider
                                     .Distinct()
                                     .ToList();
 
+            await using var sender = _serviceBusClient.CreateSender(_config.ObligationQueueName);
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
             var options = new JsonSerializerOptions { WriteIndented = true };
             foreach (var organisationId in organisationIds)
@@ -52,62 +52,52 @@ public class ServiceBusProvider : IServiceBusProvider
             }
 
             await sender.SendMessagesAsync(messageBatch);
-            _logger.LogInformation("{LogPrefix} A batch of {MessageBatchCount} messages has been published to the queue.", _logPrefix, messageBatch.Count);
+            _logger.LogInformation("[{LogPrefix}]: A batch of {MessageBatchCount} messages has been published to the obligation queue.", _logPrefix, messageBatch.Count);
         }
         catch(Exception ex)
         {
             _logger.LogError("[{LogPrefix}]: Error sending messages to queue {Ex}", _logPrefix, ex);
             throw;
         }
-        finally
-        {
-            await sender.DisposeAsync();
-        }
     }
 
     public async Task<string?> GetLastSuccessfulRunDateFromQueue()
     {
-        var receiver = _serviceBusClient.CreateReceiver(_config.ObligationLastSuccessfulRunQueueName);
         try
         {
+            await using var receiver = _serviceBusClient.CreateReceiver(_config.ObligationLastSuccessfulRunQueueName);
             var message = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
 
             if (message == null)
             {
                 return null;
             }
-            string runDate = message.Body.ToString();
+            string lastRunDate = message.Body.ToString();
             await receiver.CompleteMessageAsync(message);
-            return runDate;
+            _logger.LogInformation("[{LogPrefix}]: Last run date {Date} received from queue", _logPrefix, lastRunDate);
+
+            return lastRunDate;
         }
         catch (ServiceBusException ex)
         {
             _logger.LogError(ex, "[{LogPrefix}]: Error receiving message: {ex.Message}", _logPrefix, ex.Message);
             throw;
         }
-        finally
-        {
-            await receiver.DisposeAsync();
-        }
     }
 
     public async Task SendSuccessfulRunDateToQueue(string runDate)
     {
-        var sender = _serviceBusClient.CreateSender(_config.ObligationLastSuccessfulRunQueueName);
         try
         {
+            await using var sender = _serviceBusClient.CreateSender(_config.ObligationLastSuccessfulRunQueueName);
             var message = new ServiceBusMessage(runDate);
             await sender.SendMessageAsync(message);
-            _logger.LogInformation("[{LogPrefix}]: Run date sent to queue: {MessageBody}", _logger, message.Body);
+            _logger.LogInformation("[{LogPrefix}]: Updated currect successful run date ({RunDate})to queue", _logPrefix, runDate);
         }
         catch (ServiceBusException ex)
         {
             _logger.LogError(ex, "[{LogPrefix}]: Error whild sending runDate message: {Message}", _logPrefix, ex.Message);
             throw;
-        }
-        finally
-        {
-            await sender.DisposeAsync();
         }
     }
 }

@@ -30,17 +30,18 @@ public class StoreApprovedSubmissionsFunction
             _logger.LogInformation("[{LogPrefix}]: New session started", _logPrefix);
 
             var lastSuccessfulRunDate = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
-            
-            if(string.IsNullOrEmpty(lastSuccessfulRunDate))
+            if (string.IsNullOrEmpty(lastSuccessfulRunDate))
             {
                 lastSuccessfulRunDate = _config.DefaultRunDate;
+                _logger.LogInformation("[{LogPrefix}]: Last run date {Date} used from configuration values", _logPrefix, lastSuccessfulRunDate);
             }
-            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
 
+            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
             await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities);
             
-            // Call endpoint to update last run date
-            
+            var currectRunDate = DateTime.Now.Date.ToString("yyyy-MM-dd");
+            await _serviceBusProvider.SendSuccessfulRunDateToQueue(currectRunDate);
+
             _logger.LogInformation("[{LogPrefix}]: Completed storing submissions", _logPrefix);
         }
         catch (Exception ex)

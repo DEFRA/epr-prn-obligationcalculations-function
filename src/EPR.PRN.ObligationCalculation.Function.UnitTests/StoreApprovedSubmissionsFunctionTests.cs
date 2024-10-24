@@ -47,9 +47,9 @@ public class StoreApprovedSubmissionsFunctionTests
     }
 
     [TestMethod]
-    [DataRow("2024-10-10")]
-    [DataRow("")]
-    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(string lastSuccessfulRunDate)
+    [DataRow("2024-10-10", 2)]
+    [DataRow(null, 3)]
+    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(string lastSuccessfulRunDate, int logInformationCount)
     {
         // Arrange
         var currentRunDate = DateTime.Now.Date.ToString();
@@ -75,10 +75,7 @@ public class StoreApprovedSubmissionsFunctionTests
                     It.IsAny<It.IsAnyType>(),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception, string>>()),
-                Times.Exactly(2));
-        //_serviceBusProviderMock.Verify(x => x.GetLastSuccessfulRunDateFromQueue(), Times.Once);
-        //_serviceBusProviderMock.Verify(x => x.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities), Times.Once);
-        //_serviceBusProviderMock.Verify(x => x.SendSuccessfulRunDateToQueue(currentRunDate), Times.Once);
+                Times.Exactly(logInformationCount));
     }
 
     [TestMethod]

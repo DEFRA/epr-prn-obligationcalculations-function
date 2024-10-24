@@ -32,6 +32,7 @@ public class SubmissionsDataService : ISubmissionsDataService
         try
         {
             var result = await GetDataAsync(endpoint);
+            _logger.LogInformation("[{LogPrefix}]: Received approved submissions from data API", _logPrefix);
             var submissionEntities = JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(result);
             return submissionEntities ?? [];
         }
