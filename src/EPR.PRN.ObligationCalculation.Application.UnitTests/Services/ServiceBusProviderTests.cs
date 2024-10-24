@@ -6,8 +6,9 @@ using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualBasic;
 using Moq;
-using Newtonsoft.Json;
+using System;
 
 namespace EPR.PRN.ObligationCalculation.Tests.Services;
 
@@ -19,7 +20,6 @@ public class ServiceBusProviderTests
     private Mock<IOptions<ServiceBusConfig>> _configMock;
     private Mock<ServiceBusSender> _serviceBusSenderMock;
     private ServiceBusProvider _serviceBusProvider;
-    private Mock<IPrnService> _prnServiceMock;
     private Mock<ServiceBusReceiver> _mockReceiver;
     private Fixture fixture;
 
@@ -32,10 +32,14 @@ public class ServiceBusProviderTests
         _serviceBusClientMock = new Mock<ServiceBusClient>();
         _configMock = new Mock<IOptions<ServiceBusConfig>>();
         _serviceBusSenderMock = new Mock<ServiceBusSender>();
-        _prnServiceMock = new Mock<IPrnService>();
         _mockReceiver = new Mock<ServiceBusReceiver>();
 
-        var config = new ServiceBusConfig { QueueName = "test-queue" };
+        var config = new ServiceBusConfig
+        {
+            ObligationQueueName = "test-queue-1",
+            ObligationLastSuccessfulRunQueueName = "test-queue-2"
+        };
+
         _configMock.Setup(c => c.Value).Returns(config);
         
         // Set up ServiceBusClient to return the mock receiver
@@ -46,7 +50,6 @@ public class ServiceBusProviderTests
         _serviceBusProvider = new ServiceBusProvider(
             _loggerMock.Object,
             _serviceBusClientMock.Object,
-            _prnServiceMock.Object,
             _configMock.Object
         );
     }
@@ -68,6 +71,7 @@ public class ServiceBusProviderTests
         // Assert
         _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Once);
         _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Once);
+        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
         _loggerMock.Verify(
                 l => l.Log(
                     LogLevel.Information,
@@ -100,6 +104,7 @@ public class ServiceBusProviderTests
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
         // Assert
+        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
         _loggerMock.Verify(
                 l => l.Log(
                     LogLevel.Warning,
@@ -114,12 +119,18 @@ public class ServiceBusProviderTests
     public async Task SendApprovedSubmissionsToQueueAsync_LogInformation_WhenNoSubmissions()
     {
         // Arrange
+        var messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(500, []);
+
+        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+
         var approvedSubmissions = new List<ApprovedSubmissionEntity>();
         
         // Act
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
         // Assert
+        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
         _loggerMock.Verify(
                 l => l.Log(
                     LogLevel.Information,
@@ -146,6 +157,7 @@ public class ServiceBusProviderTests
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
         // Assert
+        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
         _loggerMock.Verify(
                 l => l.Log(
                     LogLevel.Error,
@@ -157,100 +169,109 @@ public class ServiceBusProviderTests
     }
 
     [TestMethod]
-    public async Task ReceiveAndProcessMessagesFromQueueAsync_ShouldProcessMessages()
+    public async Task GetLastSuccessfulRunDateFromQueue_Returns_LastSuccesfulRunDate()
     {
         // Arrange
-        var message1 = fixture.Build<ApprovedSubmissionEntity>()
-                                .With(r => r.OrganisationId, 1)
-                                .CreateMany(10);
-        var message2 = fixture.Build<ApprovedSubmissionEntity>()
-                                .With(r => r.OrganisationId, 2)
-                                .CreateMany(5);
+        var lastSuccessfulRunDate = "2024-10-10";
+        var message = CreateMessage(lastSuccessfulRunDate);
 
-        var messages = new List<ServiceBusReceivedMessage>
-        {
-            CreateMessage(JsonConvert.SerializeObject(message1)),
-            CreateMessage(JsonConvert.SerializeObject(message2))
-        };
-
-        // Setup receiver to return messages and then an empty list (to stop the loop)
-        _mockReceiver.SetupSequence(r => r.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(messages)  // First call returns two messages
-            .ReturnsAsync([]);  // Second call returns no messages
-
+        _mockReceiver.SetupSequence(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(message);
+        
         // Act
-        await _serviceBusProvider.ReceiveAndProcessMessagesFromQueueAsync();
+        var result = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
 
         // Assert
-        _prnServiceMock.Verify(p => p.ProcessApprovedSubmission(It.IsAny<string>()), Times.Exactly(2));  // Ensure both messages were processed
-        _mockReceiver.Verify(r => r.CompleteMessageAsync(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(2));  // Ensure both messages were completed
+        _mockReceiver.Verify(r => r.DisposeAsync(), Times.Once);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(lastSuccessfulRunDate, result);
+
     }
 
     [TestMethod]
-    public async Task ReceiveAndProcessMessagesFromQueueAsync_ShouldAbandonMessageOnError()
+    public async Task GetLastSuccessfulRunDateFromQueue_Returns_Null()
     {
         // Arrange
-        var message1 = fixture.Build<ApprovedSubmissionEntity>()
-                                .With(r => r.OrganisationId, 2)
-                                .CreateMany(5);
-        var messages = new List<ServiceBusReceivedMessage>
-        {
-            CreateMessage(JsonConvert.SerializeObject(message1))
-        };
-
-        // Setup receiver to return one message
-        _mockReceiver.SetupSequence(r => r.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(messages)
-            .ReturnsAsync([]);
-
-        // Setup ProcessApprovedSubmission to throw an exception
-        _prnServiceMock.Setup(p => p.ProcessApprovedSubmission(It.IsAny<string>())).ThrowsAsync(new Exception("Processing error"));
+        _mockReceiver.SetupSequence(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ServiceBusReceivedMessage)null);
 
         // Act
-        await _serviceBusProvider.ReceiveAndProcessMessagesFromQueueAsync();
+        var result = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
 
         // Assert
-        _mockReceiver.Verify(r => r.AbandonMessageAsync(It.IsAny<ServiceBusReceivedMessage>(), It.IsAny<IDictionary<string, object>>(), It.IsAny<CancellationToken>()), Times.Once);  // Ensure the message was abandoned
+        _mockReceiver.Verify(r => r.DisposeAsync(), Times.Once);
+        Assert.IsNull(result);
+    }
+
+
+
+    [TestMethod]
+    public async Task GetLastSuccessfulRunDateFromQueue_ThrowsException()
+    {
+        // Arrange
+        var exception = new ServiceBusException("Test exception", ServiceBusFailureReason.GeneralError);
+        _mockReceiver.SetupSequence(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(exception);
+
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<ServiceBusException>(() => _serviceBusProvider.GetLastSuccessfulRunDateFromQueue());
+        
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);  // Ensure error was logged
+            exception,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+
+        _mockReceiver.Verify(sender => sender.DisposeAsync(), Times.Once);
     }
 
     [TestMethod]
-    public async Task ReceiveAndProcessMessagesFromQueueAsync_ShouldDisposeReceiver()
+    public async Task SendSuccessfulRunDateToQueue_ShouldSendMessageSuccessfully()
     {
         // Arrange
-        _mockReceiver.Setup(r => r.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new List<ServiceBusReceivedMessage>());  // No messages, to stop the loop immediately
+        var runDate = "2024-10-10";
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>()))
+                                 .Returns(_serviceBusSenderMock.Object);
 
         // Act
-        await _serviceBusProvider.ReceiveAndProcessMessagesFromQueueAsync();
+        await _serviceBusProvider.SendSuccessfulRunDateToQueue(runDate);
 
         // Assert
-        _mockReceiver.Verify(r => r.DisposeAsync(), Times.Once);  // Ensure receiver is disposed
-    }
-
-    [TestMethod]
-    [ExpectedException(typeof(Exception))]
-    public async Task ReceiveAndProcessMessagesFromQueueAsync_ShouldThrowException()
-    {
-        // Arrange
-        _mockReceiver.Setup(r => r.ReceiveMessagesAsync(It.IsAny<int>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("error"));
-
-        // Act
-        await _serviceBusProvider.ReceiveAndProcessMessagesFromQueueAsync();
-
-        // Assert
+        _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(It.Is<ServiceBusMessage>(msg => msg.Body.ToString() == runDate), default), Times.Once);
         _loggerMock.Verify(l => l.Log(
-            LogLevel.Error,
+            LogLevel.Information,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+
+        _serviceBusSenderMock.Verify(sender => sender.DisposeAsync(), Times.Once);
+    }
+
+    [TestMethod]
+    public async Task SendSuccessfulRunDateToQueue_ShouldLogErrorAndThrow_WhenServiceBusExceptionOccurs()
+    {
+        // Arrange
+        var runDate = "2024-10-10";
+        var exception = new ServiceBusException("Test exception", ServiceBusFailureReason.GeneralError);
+
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>()))
+                                 .Returns(_serviceBusSenderMock.Object);
+        _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), default))
+                             .ThrowsAsync(exception);
+
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<ServiceBusException>(() => _serviceBusProvider.SendSuccessfulRunDateToQueue(runDate));
+
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            exception,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()),Times.Once);
+
+        _serviceBusSenderMock.Verify(sender => sender.DisposeAsync(), Times.Once);
     }
 
     // Helper method to create a real ServiceBusReceivedMessage using ServiceBusModelFactory

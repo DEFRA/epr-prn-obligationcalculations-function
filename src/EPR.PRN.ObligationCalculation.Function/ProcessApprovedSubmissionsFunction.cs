@@ -1,34 +1,37 @@
-﻿using EPR.PRN.ObligationCalculation.Application.Services;
+﻿using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using EPR.PRN.ObligationCalculation.Application.Services;
 
 namespace EPR.PRN.ObligationCalculation.Function;
 
 public class ProcessApprovedSubmissionsFunction
 {
-    private readonly IServiceBusProvider _serviceBusProvider;
+    private readonly IPrnService _prnService;
     private readonly ILogger<ProcessApprovedSubmissionsFunction> _logger;
     private readonly string _logPrefix;
 
-    public ProcessApprovedSubmissionsFunction(ILogger<ProcessApprovedSubmissionsFunction> logger, IServiceBusProvider serviceBusProvider)
+    public ProcessApprovedSubmissionsFunction(ILogger<ProcessApprovedSubmissionsFunction> logger, IPrnService prnService)
     {
         _logger = logger;
-        _serviceBusProvider = serviceBusProvider;
+        _prnService = prnService;
         _logPrefix = nameof(ProcessApprovedSubmissionsFunction);
     }
 
     [Function("ProcessApprovedSubmissionsFunction")]
-    public async Task RunAsync([TimerTrigger("%ProcessApprovedSubmissions:Schedule%")] TimerInfo myTimer)
+    public async Task RunAsync([ServiceBusTrigger("%ServiceBus:QueueName%", Connection = "ServiceBus:ConnectionString")] ServiceBusReceivedMessage message)
     {
         try
         {
-            _logger.LogInformation("[{LogPrefix}]: New session started", _logPrefix);
-            await _serviceBusProvider.ReceiveAndProcessMessagesFromQueueAsync();
-            _logger.LogInformation("[{LogPrefix}]: Completed processing submissions", _logPrefix);
+            _logger.LogInformation("[{LogPrefix}]: Received message with ID: {MessageId}", _logPrefix, message.MessageId);
+            string messageBody = message.Body.ToString();
+            _logger.LogInformation("[{LogPrefix}]: Message body: {MessageBody}", _logPrefix, messageBody);
+            await _prnService.ProcessApprovedSubmission(messageBody);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            _logger.LogError(ex, "[{LogPrefix}]: Error while processing approved submission", _logPrefix);
+            _logger.LogError(ex, "[{LogPrefix}]: Exception occurred while processing message: {Message}", _logPrefix, ex.Message);
+            throw;
         }
     }
 }

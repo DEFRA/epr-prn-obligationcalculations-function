@@ -20,6 +20,7 @@ public static class ConfigurationExtensions
         services.Configure<ServiceBusConfig>(configuration.GetSection(ServiceBusConfig.SectionName));
         services.Configure<CommonDataApiConfig>(configuration.GetSection(CommonDataApiConfig.SectionName));
         services.Configure<CommonBackendApiConfig>(configuration.GetSection(CommonBackendApiConfig.SectionName));
+        services.Configure<ApplicationConfig>(configuration.GetSection(ApplicationConfig.SectionName));
         return services;
     }
 

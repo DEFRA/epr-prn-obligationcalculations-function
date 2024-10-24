@@ -1,9 +1,13 @@
-﻿using EPR.PRN.ObligationCalculation.Application.DTOs;
+﻿using Azure.Messaging.ServiceBus;
+using EPR.PRN.ObligationCalculation.Application.DTOs;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
 public interface IServiceBusProvider
 {
     Task SendApprovedSubmissionsToQueueAsync(List<ApprovedSubmissionEntity> approvedSubmissionEntities);
-    Task ReceiveAndProcessMessagesFromQueueAsync();
+    
+    Task<string?> GetLastSuccessfulRunDateFromQueue();
+
+    Task SendSuccessfulRunDateToQueue(string runDate);
 }
