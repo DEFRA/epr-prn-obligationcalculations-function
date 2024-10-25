@@ -47,78 +47,6 @@ public class PrnServiceTests
     }
 
     [TestMethod]
-    public async Task GetLastSuccessfulRunDate_ShouldReturnDate_WhenResponseIsOk()
-    {
-        // Arrange
-        var expectedDate = "2024-01-01";
-        var responseMessage = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(expectedDate)
-        };
-
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(responseMessage);
-
-        // Act
-        var result = await _prnService.GetLastSuccessfulRunDate();
-
-        // Assert
-        Assert.AreEqual(expectedDate, result);
-    }
-
-    [TestMethod]
-    public async Task GetLastSuccessfulRunDate_ShouldReturnEmpty_WhenResponseIsNotOk()
-    {
-        // Arrange
-        var responseMessage = new HttpResponseMessage(HttpStatusCode.InternalServerError);
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(responseMessage);
-
-        // Act
-        var result = await _prnService.GetLastSuccessfulRunDate();
-
-        // Assert
-        Assert.AreEqual(string.Empty, result);
-    }
-
-    [TestMethod]
-    public async Task UpdateLastSuccessfulRunDate_ShouldSendPutRequest()
-    {
-        // Arrange
-        var currentDate = DateTime.Now;
-
-        _httpMessageHandlerMock
-            .Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK));
-
-        // Act
-        await _prnService.UpdateLastSuccessfulRunDate(currentDate);
-
-        // Assert
-        _httpMessageHandlerMock
-            .Protected()
-            .Verify(
-                "SendAsync",
-                Times.Once(),
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>());
-    }
-
-    [TestMethod]
     public async Task ProcessApprovedSubmission_ShouldLogInformation_WhenSubmissionIsEmpty()
     {
         // Arrange
@@ -167,5 +95,71 @@ public class PrnServiceTests
                 Times.Once(),
                 ItExpr.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Post && r.RequestUri.ToString().Contains(_config.BaseUrl)),
                 ItExpr.IsAny<CancellationToken>());
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(HttpRequestException))]
+    public async Task ProcessApprovedSubmission_ShouldThrowHttpRequestException_WhenUnsuccesfulResponse()
+    {
+        // Arrange
+        var submission = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
+        {
+            new() { SubmissionId = Guid.NewGuid() }
+        });
+
+        var expectedLogMessage = "Error while submitting submissions data";
+
+        _httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        await _prnService.ProcessApprovedSubmission(submission);
+
+        // Assert handled by ExpectedException
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()));
+    }
+
+    [TestMethod]
+    [ExpectedException(typeof(Exception))]
+    public async Task ProcessApprovedSubmission_ShouldThrowException_WhenHttpClientThrowsException()
+    {
+        // Arrange
+        var submission = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
+        {
+            new() { SubmissionId = Guid.NewGuid() }
+        });
+
+        var expectedLogMessage = "Error while submitting submissions data";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new Exception("Test Exception"));
+
+        // Act
+        await _prnService.ProcessApprovedSubmission(submission);
+
+        // Assert handled by ExpectedException
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()));
     }
 }

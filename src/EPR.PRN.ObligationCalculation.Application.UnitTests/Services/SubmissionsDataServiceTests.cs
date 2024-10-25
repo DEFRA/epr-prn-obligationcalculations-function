@@ -125,7 +125,7 @@ public class SubmissionsDataServiceTests
 
         // Assert handled by ExpectedException
         _loggerMock.Verify(l => l.Log(
-            LogLevel.Information,
+            LogLevel.Error,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
             null,

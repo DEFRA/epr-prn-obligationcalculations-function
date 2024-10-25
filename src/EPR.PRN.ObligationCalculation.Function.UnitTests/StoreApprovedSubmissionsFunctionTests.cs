@@ -79,12 +79,16 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(logInformationCount));
     }
 
+    [TestMethod]
     [DataRow(true, null)]
     [DataRow(false, null)]
+    [DataRow(true, "")]
+    [DataRow(false, "")]
     public async Task RunAsync_Terminated_WhenRunDateIsNullOrEmpty(bool useDefaultRunDate, string lastSuccessfulRunDate)
     {
         // Arrange
         _configMock.Object.Value.UseDefaultRunDate = useDefaultRunDate;
+        _configMock.Object.Value.DefaultRunDate = lastSuccessfulRunDate;
         _function = new StoreApprovedSubmissionsFunction(
             _loggerMock.Object,
             _submissionsDataService.Object,
