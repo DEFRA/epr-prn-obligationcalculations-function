@@ -13,6 +13,7 @@
         "ServiceBus__ObligationLastSuccessfulRunQueueName": "UseDevelopmentStorage=true",
         "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",
         "ApplicationConfig__DeveloperMode": false,
+        "ApplicationConfig__UseDefaultRunDate": "UseDevelopmentStorage=true",
         "ApplicationConfig__DefaultRunDate": "UseDevelopmentStorage=true",
         "StoreApprovedSubmissions__Schedule": "0 */5 * * * *"
     }

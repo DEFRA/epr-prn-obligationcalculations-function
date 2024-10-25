@@ -8,5 +8,6 @@ public class ApplicationConfig
 
     public const string SectionName = "AppConfig";
     public bool DeveloperMode { get; set; }
+    public bool UseDefaultRunDate { get; set; }
     public string DefaultRunDate { get; set; } = null!;
 }

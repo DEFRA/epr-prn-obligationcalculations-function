@@ -163,7 +163,7 @@ public class ServiceBusProviderTests
 
         int numCallsCompleteMessage = 0;
         _serviceBusReceiverMock
-            .Setup(receiver => receiver.CompleteMessageAsync(message,
+            .Setup(r => r.CompleteMessageAsync(message,
                 It.IsAny<CancellationToken>())).Callback(() => numCallsCompleteMessage++)
             .Returns(Task.CompletedTask);
 
@@ -205,18 +205,25 @@ public class ServiceBusProviderTests
         // Assert
         _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.Once);
         Assert.IsNull(result);
+        
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
     }
 
     [TestMethod]
     public async Task GetLastSuccessfulRunDateFromQueue_ThrowsException()
     {
         // Arrange
-        var exception = new ServiceBusException("Test exception", ServiceBusFailureReason.GeneralError);
+        var exception = new Exception("Test exception");
         _serviceBusReceiverMock.Setup(r => r.ReceiveMessageAsync(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(exception);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<ServiceBusException>(() => _serviceBusProvider.GetLastSuccessfulRunDateFromQueue());
+        await Assert.ThrowsExceptionAsync<Exception>(() => _serviceBusProvider.GetLastSuccessfulRunDateFromQueue());
         
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
@@ -256,7 +263,7 @@ public class ServiceBusProviderTests
     {
         // Arrange
         var runDate = "2024-10-10";
-        var exception = new ServiceBusException("Test exception", ServiceBusFailureReason.GeneralError);
+        var exception = new Exception("Test exception");
 
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>()))
                                  .Returns(_serviceBusSenderMock.Object);
@@ -264,7 +271,7 @@ public class ServiceBusProviderTests
                              .ThrowsAsync(exception);
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<ServiceBusException>(() => _serviceBusProvider.SendSuccessfulRunDateToQueue(runDate));
+        await Assert.ThrowsExceptionAsync<Exception>(() => _serviceBusProvider.SendSuccessfulRunDateToQueue(runDate));
 
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,

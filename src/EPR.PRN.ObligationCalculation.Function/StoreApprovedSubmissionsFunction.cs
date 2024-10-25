@@ -29,11 +29,21 @@ public class StoreApprovedSubmissionsFunction
         {
             _logger.LogInformation("[{LogPrefix}]: New session started", _logPrefix);
 
-            var lastSuccessfulRunDate = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
-            if (string.IsNullOrEmpty(lastSuccessfulRunDate))
+            var lastSuccessfulRunDate = string.Empty;
+            if (_config.UseDefaultRunDate)
             {
                 lastSuccessfulRunDate = _config.DefaultRunDate;
                 _logger.LogInformation("[{LogPrefix}]: Last run date {Date} used from configuration values", _logPrefix, lastSuccessfulRunDate);
+            }
+            else
+            {
+                lastSuccessfulRunDate = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
+                _logger.LogInformation("[{LogPrefix}]: Last run date {Date} retrieved from queue", _logPrefix, lastSuccessfulRunDate);
+            }
+
+            if (string.IsNullOrEmpty(lastSuccessfulRunDate)) {
+                _logger.LogError("[{LogPrefix}]: Last succesful run date is empty and function is terminated", _logPrefix);
+                return;
             }
 
             var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);

@@ -70,6 +70,7 @@ public class ServiceBusProvider : IServiceBusProvider
 
             if (message == null)
             {
+                _logger.LogInformation("[{LogPrefix}]: No message found to return last successful run date from the queue {QueueName}", _logPrefix, _config.ObligationLastSuccessfulRunQueueName);
                 return null;
             }
             string lastRunDate = message.Body.ToString();
@@ -77,7 +78,7 @@ public class ServiceBusProvider : IServiceBusProvider
             _logger.LogInformation("[{LogPrefix}]: Last run date {Date} received from queue", _logPrefix, lastRunDate);
             return lastRunDate;
         }
-        catch (ServiceBusException ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "[{LogPrefix}]: Error receiving message: {ex.Message}", _logPrefix, ex.Message);
             throw;
@@ -93,7 +94,7 @@ public class ServiceBusProvider : IServiceBusProvider
             await sender.SendMessageAsync(message);
             _logger.LogInformation("[{LogPrefix}]: Updated currect successful run date ({RunDate})to queue", _logPrefix, runDate);
         }
-        catch (ServiceBusException ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "[{LogPrefix}]: Error whild sending runDate message: {Message}", _logPrefix, ex.Message);
             throw;
