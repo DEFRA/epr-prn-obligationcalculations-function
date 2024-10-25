@@ -3,7 +3,6 @@ using EPR.PRN.ObligationCalculation.Application.DTOs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Net;
 using System.Net.Http.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
@@ -36,7 +35,7 @@ public class PrnService : IPrnService
                 var submissionEntities = JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(submissions);
                 if (submissionEntities != null)
                 {
-                    var organisationId = Guid.NewGuid();
+                    var organisationId = submissionEntities[0].OrganisationId;
                     string prnCalculateEndPoint = string.Format(_config.PrnCalculateEndPoint, organisationId);
                     var response = await _httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissions);
                     response.EnsureSuccessStatusCode();

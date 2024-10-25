@@ -83,7 +83,7 @@ public class ServiceBusProviderTests
     {
         // Arrange
         var approvedSubmissions = fixture.Build<ApprovedSubmissionEntity>()
-            .With(x => x.OrganisationId, 123)
+            .With(x => x.OrganisationId, Guid.NewGuid())
             .CreateMany(10)
             .ToList();
         int messageCountThreshold = 1;

@@ -26,7 +26,7 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddAzureClients(this IServiceCollection services, IConfiguration configuration)
     {
-        var isDevMode = configuration.GetValue<bool?>("ApiConfig:DeveloperMode");
+        var isDevMode = configuration.GetValue<bool?>("ApplicationConfig:DeveloperMode");
         if (isDevMode is true)
         {
             services.AddAzureClients(clientBuilder =>

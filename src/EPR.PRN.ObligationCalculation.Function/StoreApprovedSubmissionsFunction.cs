@@ -41,7 +41,8 @@ public class StoreApprovedSubmissionsFunction
                 _logger.LogInformation("[{LogPrefix}]: Last run date {Date} retrieved from queue", _logPrefix, lastSuccessfulRunDate);
             }
 
-            if (string.IsNullOrEmpty(lastSuccessfulRunDate)) {
+            if (string.IsNullOrEmpty(lastSuccessfulRunDate))
+            {
                 _logger.LogError("[{LogPrefix}]: Last succesful run date is empty and function is terminated", _logPrefix);
                 return;
             }

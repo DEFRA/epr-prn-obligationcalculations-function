@@ -1,5 +1,4 @@
-﻿using Azure.Messaging.ServiceBus;
-using EPR.PRN.ObligationCalculation.Application.DTOs;
+﻿using EPR.PRN.ObligationCalculation.Application.DTOs;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 

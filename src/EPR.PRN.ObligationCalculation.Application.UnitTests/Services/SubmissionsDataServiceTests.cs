@@ -49,7 +49,7 @@ public class SubmissionsDataServiceTests
     {
         // Arrange
         var expectedLogMessage = $"Get Approved Submissions Data from {_lastSuccessfulRunDate}";
-
+        var organisationId = Guid.NewGuid();
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -59,13 +59,7 @@ public class SubmissionsDataServiceTests
             {
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(
-                    """
-                    [
-                        {
-                            "OrganisationId": "123"
-                        }
-                    ]
-                    """)
+                    "[{ \"OrganisationId\": \"" + organisationId + "\" }]")
             });
 
         // Act
@@ -74,7 +68,7 @@ public class SubmissionsDataServiceTests
         // Assert
         Assert.IsNotNull(result);
         Assert.AreEqual(1, result.Count);
-        Assert.AreEqual(123, result[0].OrganisationId);
+        Assert.AreEqual(organisationId, result[0].OrganisationId);
         _loggerMock.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
