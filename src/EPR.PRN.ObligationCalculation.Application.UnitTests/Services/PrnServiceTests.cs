@@ -32,7 +32,6 @@ public class PrnServiceTests
         _config = new CommonBackendApiConfig
         {
             BaseUrl = "http://test-url.com/",
-            LastSuccessfulRunDateEndPoint = "api/lastrun",
             PrnCalculateEndPoint = "api/calculate/{0}"
         };
 

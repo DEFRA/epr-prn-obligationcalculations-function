@@ -6,7 +6,7 @@ namespace EPR.PRN.ObligationCalculation.Application.Configs;
 public class ApplicationConfig
 {
 
-    public const string SectionName = "AppConfig";
+    public const string SectionName = "ApplicationConfig";
     public bool DeveloperMode { get; set; }
     public bool UseDefaultRunDate { get; set; }
     public string DefaultRunDate { get; set; } = null!;

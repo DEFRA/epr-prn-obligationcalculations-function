@@ -58,6 +58,7 @@ public class StoreApprovedSubmissionsFunction
         catch (Exception ex)
         {
             _logger.LogError(ex, "[{LogPrefix}]: Ended with error while storing approved submission", _logPrefix);
+            throw;
         }
     }
 }
