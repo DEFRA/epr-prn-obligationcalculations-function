@@ -1,6 +1,7 @@
 ﻿#nullable disable
 
 using AutoFixture;
+using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
@@ -128,11 +129,10 @@ public class StoreApprovedSubmissionsFunctionTests
             .Setup(x => x.GetApprovedSubmissionsData(It.IsAny<string>()))
             .ThrowsAsync(new Exception("Test Exception"));
 
-        // Act
-        await _function.RunAsync(_timerInfo);
+        // Act & Assert
+        await Assert.ThrowsExceptionAsync<Exception>(() => _function.RunAsync(_timerInfo));
 
-        // Assert
-        // Verify that the error is logged
+        // Assert - Ex
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
