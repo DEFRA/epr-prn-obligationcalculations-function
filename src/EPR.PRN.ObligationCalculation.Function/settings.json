@@ -14,6 +14,6 @@
         "ApplicationConfig__DeveloperMode": false,
         "ApplicationConfig__UseDefaultRunDate": "UseDevelopmentStorage=true",
         "ApplicationConfig__DefaultRunDate": "UseDevelopmentStorage=true",
-        "StoreApprovedSubmissions__Schedule": "0 */5 * * * *"
+        "StoreApprovedSubmissions__Schedule": "0 0 * * * MON-FRI"
     }
 }
