@@ -41,10 +41,6 @@ public class ServiceBusProvider : IServiceBusProvider
             foreach (var organisationId in organisationIds)
             {
                 var submissions = approvedSubmissionEntities.Where(s => s.OrganisationId == organisationId).ToList();
-                if (submissions.Count == 0)
-                {
-                    continue;
-                }
                 var jsonSumissions = JsonSerializer.Serialize(submissions, options);
                 if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonSumissions)))
                 {
