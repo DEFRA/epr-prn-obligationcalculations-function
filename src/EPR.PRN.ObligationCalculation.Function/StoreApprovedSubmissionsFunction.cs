@@ -2,6 +2,7 @@ using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EPR.PRN.ObligationCalculation.Function;
 
@@ -10,33 +11,54 @@ public class StoreApprovedSubmissionsFunction
     private readonly ISubmissionsDataService _submissionsService;
     private readonly IServiceBusProvider _serviceBusProvider;
     private readonly ILogger<StoreApprovedSubmissionsFunction> _logger;
-
-    private readonly string LogPrefix = ApplicationConstants.StoreApprovedSubmissionsFunctionLogPrefix;
-
-    public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider)
+    private readonly ApplicationConfig _config;
+    private readonly string _logPrefix;
+    public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider, IOptions<ApplicationConfig> config)
     {
         _logger = logger;
         _submissionsService = submissionsService;
         _serviceBusProvider = serviceBusProvider;
+        _config = config.Value;
+        _logPrefix = nameof(StoreApprovedSubmissionsFunction);
     }
 
     [Function("StoreApprovedSubmissionsFunction")]
     public async Task RunAsync([TimerTrigger("%StoreApprovedSubmissions:Schedule%")] TimerInfo myTimer)
     {
-        _logger.LogInformation("{LogPrefix} >>>>> New session started <<<<< ", LogPrefix);
-
-        var lastSuccessfulRunDate = "2024-01-01";
-        var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
-
-        if (approvedSubmissionEntities.Count > 0)
+        try
         {
-            _logger.LogInformation("{LogPrefix} >>>>> Number of Submissions received : {ApprovedSubmissionEntitiesCount}", LogPrefix, approvedSubmissionEntities.Count);
-            await _serviceBusProvider.SendApprovedSubmissionsToQueue(approvedSubmissionEntities);
-            _logger.LogInformation("{LogPrefix} COMPLETED >>>>> Number of Submissions send to queue : {ApprovedSubmissionEntitiesCount}", LogPrefix, approvedSubmissionEntities.Count);
+            _logger.LogInformation("[{LogPrefix}]: New session started", _logPrefix);
+
+            var lastSuccessfulRunDate = string.Empty;
+            if (_config.UseDefaultRunDate)
+            {
+                lastSuccessfulRunDate = _config.DefaultRunDate;
+                _logger.LogInformation("[{LogPrefix}]: Last run date {Date} used from configuration values", _logPrefix, lastSuccessfulRunDate);
+            }
+            else
+            {
+                lastSuccessfulRunDate = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
+                _logger.LogInformation("[{LogPrefix}]: Last run date {Date} retrieved from queue", _logPrefix, lastSuccessfulRunDate);
+            }
+
+            if (string.IsNullOrEmpty(lastSuccessfulRunDate))
+            {
+                _logger.LogError("[{LogPrefix}]: Last succesful run date is empty and function is terminated", _logPrefix);
+                return;
+            }
+
+            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
+            await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities);
+            
+            var currectRunDate = DateTime.Now.Date.ToString("yyyy-MM-dd");
+            await _serviceBusProvider.SendSuccessfulRunDateToQueue(currectRunDate);
+
+            _logger.LogInformation("[{LogPrefix}]: Completed storing submissions", _logPrefix);
         }
-        else
+        catch (Exception ex)
         {
-            _logger.LogInformation("{LogPrefix} COMPLETED >>>>> No new submissions received and send to queue <<<<< ", LogPrefix);
+            _logger.LogError(ex, "[{LogPrefix}]: Ended with error while storing approved submission", _logPrefix);
+            throw;
         }
     }
 }

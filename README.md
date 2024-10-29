@@ -1,4 +1,4 @@
-# epr-prn-obligationcalculations-facade
+# epr-prn-obligationcalculations-function
 The README should include the following (if they apply):
 
 - **Description of the product** – what the service or product is, and what role this repo performs within it
@@ -25,19 +25,20 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
 {
     "IsEncrypted": false,
     "Values": {
-        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+		"AzureWebJobsStorage": "UseDevelopmentStorage=true",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-        "Submissions__BaseUrl": "http://localhost:5001/api/submissions",
-        "Submissions__EndPoint": "/v1/pom/approved/",
-        "AppInsights__ClientId": "",
-        "AppInsights__TenantId": "",
-        "AppInsights__ClientSecret": "",
-        "AppInsights__WorkspaceId": "",
-        "ServiceBus__Namespace": "DEVRWDINFSB1402.servicebus.windows.net",
-        "ServiceBus__QueueName": "defra.epr.obligation",
+        "CommonDataApi__BaseUrl": "",
+        "CommonDataApi__SubmissionsEndPoint": "api/submissions/v1/pom/approved/",
+        "CommonBackendApi__BaseUrl": "",
+        "CommonBackendApi__PrnCalculateEndPoint": "api/v1/prn/organisation/{0}/calculate",
+        "ServiceBus__Namespace": "",
+        "ServiceBus__ObligationQueueName": "",
+        "ServiceBus__ObligationLastSuccessfulRunQueueName": "",
         "ServiceBus__ConnectionString": "",
-        "ApiConfig__DeveloperMode": true,
-        "StoreApprovedSubmissions__Schedule": "*/10 * * * * *"
+        "ApplicationConfig__DeveloperMode": true,
+        "ApplicationConfig__UseDefaultRunDate": true,
+        "ApplicationConfig__DefaultRunDate": "2024-01-01",
+        "StoreApprovedSubmissions__Schedule": "0 */30 * * * *"
     }
 }
 ```
