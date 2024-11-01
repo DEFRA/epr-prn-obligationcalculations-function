@@ -4,7 +4,7 @@ namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Helpers;
 
 public static class ServiceBusModelBuilder
 {
-    public static ServiceBusReceivedMessage CreateServiceBusReceivedMessage(string body)
+    public static ServiceBusReceivedMessage CreateServiceBusReceivedMessage(string body, long sequenceNumber)
     {
         var binaryData = new BinaryData(body);
 
@@ -23,7 +23,7 @@ public static class ServiceBusModelBuilder
             timeToLive: TimeSpan.FromMinutes(2),
             scheduledEnqueueTime: DateTimeOffset.UtcNow,
             lockTokenGuid: Guid.NewGuid(),
-            sequenceNumber: 1,
+            sequenceNumber: sequenceNumber,
             enqueuedSequenceNumber: 1,
             enqueuedTime: DateTimeOffset.UtcNow,
             lockedUntil: DateTimeOffset.UtcNow.AddMinutes(5),

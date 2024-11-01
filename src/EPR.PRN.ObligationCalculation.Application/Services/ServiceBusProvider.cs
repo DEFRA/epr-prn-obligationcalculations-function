@@ -41,10 +41,6 @@ public class ServiceBusProvider : IServiceBusProvider
             foreach (var organisationId in organisationIds)
             {
                 var submissions = approvedSubmissionEntities.Where(s => s.OrganisationId == organisationId).ToList();
-                if (submissions.Count == 0)
-                {
-                    continue;
-                }
                 var jsonSumissions = JsonSerializer.Serialize(submissions, options);
                 if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonSumissions)))
                 {
@@ -67,15 +63,26 @@ public class ServiceBusProvider : IServiceBusProvider
         try
         {
             await using var receiver = _serviceBusClient.CreateReceiver(_config.ObligationLastSuccessfulRunQueueName);
-            var message = await receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(10));
 
-            if (message == null)
+            // Retrieve all messages from the queue
+            var messages = await receiver.ReceiveMessagesAsync(int.MaxValue, TimeSpan.FromSeconds(10));
+
+            if (messages == null || !messages.Any())
             {
-                _logger.LogInformation("[{LogPrefix}]: No message found to return last successful run date from the queue {QueueName}", _logPrefix, _config.ObligationLastSuccessfulRunQueueName);
+                _logger.LogInformation("[{LogPrefix}]: No messages found to return last successful run date from the queue {QueueName}", _logPrefix, _config.ObligationLastSuccessfulRunQueueName);
                 return null;
             }
-            string lastRunDate = message.Body.ToString();
-            await receiver.CompleteMessageAsync(message);
+
+            // Get the message with the latest sequence number
+            var latestMessage = messages.OrderByDescending(m => m.SequenceNumber).First();
+            string lastRunDate = latestMessage.Body.ToString();
+
+            // Mark all messages as completed
+            foreach (var message in messages)
+            {
+                await receiver.CompleteMessageAsync(message);
+            }
+
             _logger.LogInformation("[{LogPrefix}]: Last run date {Date} received from queue", _logPrefix, lastRunDate);
             return lastRunDate;
         }
