@@ -12,14 +12,12 @@ public class PrnService : IPrnService
     private readonly ILogger<PrnService> _logger;
     private readonly HttpClient _httpClient;
     private readonly CommonBackendApiConfig _config;
-    private readonly string _logPrefix;
 
     public PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOptions<CommonBackendApiConfig> config)
     {
         _logger = logger;
         _httpClient = httpClient;
         _config = config.Value;
-        _logPrefix = nameof(PrnService);
     }
 
     public async Task ProcessApprovedSubmission(string submissions)
@@ -28,7 +26,7 @@ public class PrnService : IPrnService
         {
             if (string.IsNullOrEmpty(submissions))
             {
-                _logger.LogInformation("[{LogPrefix}]: Submissions message is empty", _logPrefix);
+                _logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions message is empty", _config.LogPrefix);
             }
             else
             {
@@ -37,15 +35,19 @@ public class PrnService : IPrnService
                 {
                     var organisationId = submissionEntities[0].OrganisationId;
                     string prnCalculateEndPoint = string.Format(_config.PrnCalculateEndPoint, organisationId);
+                    _logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request being sent to Endpoint : {Endpoint}, Submissions : {Submissions}", _config.LogPrefix, prnCalculateEndPoint, submissions);
+
                     var response = await _httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissions);
+                    _logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions response received : {Response}", _config.LogPrefix, JsonConvert.SerializeObject(response));
+                    
                     response.EnsureSuccessStatusCode();
-                    _logger.LogInformation("[{LogPrefix}]: Submissions message is posted to backend", _logPrefix);
+                    _logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions message is posted to backend", _config.LogPrefix);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{LogPrefix}]: Error while submitting submissions data to endpoint {Endpoint}", _logPrefix, _config.PrnCalculateEndPoint);
+            _logger.LogError(ex, "{LogPrefix}: PrnService - ProcessApprovedSubmission - Error while submitting submissions data to endpoint {Endpoint}", _config.LogPrefix, _config.PrnCalculateEndPoint);
             throw;
         }
     }
