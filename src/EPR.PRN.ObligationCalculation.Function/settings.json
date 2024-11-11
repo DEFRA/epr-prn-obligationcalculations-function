@@ -7,7 +7,7 @@
         "CommonDataApi__SubmissionsEndPoint": "UseDevelopmentStorage=true",
         "CommonBackendApi__BaseUrl": "UseDevelopmentStorage=true",
         "CommonBackendApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
-        "ServiceBus__Namespace": "UseDevelopmentStorage=true",
+        "ServiceBus__FullyQualifiedNamespace": "UseDevelopmentStorage=true",
         "ServiceBus__ObligationQueueName": "UseDevelopmentStorage=true",
         "ServiceBus__ObligationLastSuccessfulRunQueueName": "UseDevelopmentStorage=true",
         "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",

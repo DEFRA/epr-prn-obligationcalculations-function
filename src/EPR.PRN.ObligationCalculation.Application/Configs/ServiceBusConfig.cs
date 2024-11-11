@@ -6,7 +6,7 @@ namespace EPR.PRN.ObligationCalculation.Application.Configs;
 public class ServiceBusConfig
 {
     public const string SectionName = "ServiceBus";
-    public string Namespace { get; set; } = null!;
+    public string FullyQualifiedNamespace { get; set; } = null!;
     public string ObligationQueueName { get; set; } = null!;
     public string ObligationLastSuccessfulRunQueueName { get; set; } = null!;
     public string ConnectionString { get; set; } = null!;
