@@ -9,6 +9,7 @@ namespace EPR.PRN.ObligationCalculation.Application.Services;
 
 public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusClient serviceBusClient, IOptions<ServiceBusConfig> config) : IServiceBusProvider
 {
+    private static readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
     public async Task SendApprovedSubmissionsToQueueAsync(List<ApprovedSubmissionEntity> approvedSubmissionEntities)
     {
         try
@@ -25,11 +26,10 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
 
             await using var sender = serviceBusClient.CreateSender(config.Value.ObligationQueueName);
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
-            var options = new JsonSerializerOptions { WriteIndented = true };
             foreach (var organisationId in organisationIds)
             {
                 var submissions = approvedSubmissionEntities.Where(s => s.OrganisationId == organisationId).ToList();
-                var jsonSumissions = JsonSerializer.Serialize(submissions, options);
+                var jsonSumissions = JsonSerializer.Serialize(submissions, jsonOptions);
                 if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonSumissions)))
                 {
                     logger.LogWarning("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - The message {OrganisationId} is too large to fit in the batch.", config.Value.LogPrefix, organisationId);
@@ -50,7 +50,6 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
     {
         try
         {
-            var options = new JsonSerializerOptions { WriteIndented = true };
             await using var receiver = serviceBusClient.CreateReceiver(config.Value.ObligationLastSuccessfulRunQueueName);
 
             // Retrieve all messages from the queue
@@ -60,7 +59,7 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
                 logger.LogInformation("{LogPrefix}: GetLastSuccessfulRunDateFromQueue - No messages found to return last successful run date from the queue {QueueName}", config.Value.LogPrefix, config.Value.ObligationLastSuccessfulRunQueueName);
                 return null;
             }
-            logger.LogInformation("{LogPrefix}: GetLastSuccessfulRunDateFromQueue - Messages received {Messages} from the queue {QueueName}", config.Value.LogPrefix, JsonSerializer.Serialize(messages, options), config.Value.ObligationLastSuccessfulRunQueueName);
+            logger.LogInformation("{LogPrefix}: GetLastSuccessfulRunDateFromQueue - Messages received {Messages} from the queue {QueueName}", config.Value.LogPrefix, JsonSerializer.Serialize(messages, jsonOptions), config.Value.ObligationLastSuccessfulRunQueueName);
 
             // Get the message with the latest sequence number
             var latestMessage = messages.OrderByDescending(m => m.SequenceNumber).First();
