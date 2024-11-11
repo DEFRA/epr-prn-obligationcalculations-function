@@ -10,4 +10,5 @@ public class ServiceBusConfig
     public string ObligationQueueName { get; set; } = null!;
     public string ObligationLastSuccessfulRunQueueName { get; set; } = null!;
     public string ConnectionString { get; set; } = null!;
+    public string LogPrefix { get; set; } = string.Empty;
 }

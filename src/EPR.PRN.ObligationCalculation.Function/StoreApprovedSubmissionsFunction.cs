@@ -3,61 +3,52 @@ using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 
 namespace EPR.PRN.ObligationCalculation.Function;
 
-public class StoreApprovedSubmissionsFunction
+public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider, IOptions<ApplicationConfig> config)
 {
-    private readonly ISubmissionsDataService _submissionsService;
-    private readonly IServiceBusProvider _serviceBusProvider;
-    private readonly ILogger<StoreApprovedSubmissionsFunction> _logger;
-    private readonly ApplicationConfig _config;
-    private readonly string _logPrefix;
-    public StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider, IOptions<ApplicationConfig> config)
-    {
-        _logger = logger;
-        _submissionsService = submissionsService;
-        _serviceBusProvider = serviceBusProvider;
-        _config = config.Value;
-        _logPrefix = nameof(StoreApprovedSubmissionsFunction);
-    }
-
     [Function("StoreApprovedSubmissionsFunction")]
     public async Task RunAsync([TimerTrigger("%StoreApprovedSubmissions:Schedule%")] TimerInfo myTimer)
     {
         try
         {
-            _logger.LogInformation("[{LogPrefix}]: New session started", _logPrefix);
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: New session started", config.Value.LogPrefix);
 
             var lastSuccessfulRunDate = string.Empty;
-            if (_config.UseDefaultRunDate)
+            if (config.Value.UseDefaultRunDate)
             {
-                lastSuccessfulRunDate = _config.DefaultRunDate;
-                _logger.LogInformation("[{LogPrefix}]: Last run date {Date} used from configuration values", _logPrefix, lastSuccessfulRunDate);
+                lastSuccessfulRunDate = config.Value.DefaultRunDate;
+                logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Last run date {Date} used from configuration values", config.Value.LogPrefix, lastSuccessfulRunDate);
             }
             else
             {
-                lastSuccessfulRunDate = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
-                _logger.LogInformation("[{LogPrefix}]: Last run date {Date} retrieved from queue", _logPrefix, lastSuccessfulRunDate);
+                lastSuccessfulRunDate = await serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
+                logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Last run date {Date} retrieved from queue", config.Value.LogPrefix, lastSuccessfulRunDate);
             }
 
             if (string.IsNullOrEmpty(lastSuccessfulRunDate))
             {
-                _logger.LogError("[{LogPrefix}]: Last succesful run date is empty and function is terminated", _logPrefix);
+                logger.LogError("{LogPrefix}: StoreApprovedSubmissionsFunction: Last succesful run date is empty and function is terminated", config.Value.LogPrefix);
                 return;
             }
 
-            var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
-            await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities);
-            
-            var currectRunDate = DateTime.Now.Date.ToString("yyyy-MM-dd");
-            await _serviceBusProvider.SendSuccessfulRunDateToQueue(currectRunDate);
+            var approvedSubmissionEntities = await submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Approved submission entities retrieved from backnend {ApprovedSubmissionEntities}", config.Value.LogPrefix, JsonConvert.SerializeObject(approvedSubmissionEntities));
 
-            _logger.LogInformation("[{LogPrefix}]: Completed storing submissions", _logPrefix);
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Sending Approved submission entities to queue...", config.Value.LogPrefix);
+            await serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities);
+
+            var currectRunDate = DateTime.Now.Date.ToString("yyyy-MM-dd");
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Adding Successful RunDate To Queue {CurrectRunDate} ...", config.Value.LogPrefix, currectRunDate.ToString());
+            await serviceBusProvider.SendSuccessfulRunDateToQueue(currectRunDate);
+
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Completed storing submissions", config.Value.LogPrefix);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{LogPrefix}]: Ended with error while storing approved submission", _logPrefix);
+            logger.LogError(ex, "{LogPrefix}: StoreApprovedSubmissionsFunction: Ended with error while storing approved submission", config.Value.LogPrefix);
             throw;
         }
     }

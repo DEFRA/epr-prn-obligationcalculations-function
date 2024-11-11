@@ -7,28 +7,15 @@ using System.Net.Http.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
-public class PrnService : IPrnService
+public class PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOptions<CommonBackendApiConfig> config) : IPrnService
 {
-    private readonly ILogger<PrnService> _logger;
-    private readonly HttpClient _httpClient;
-    private readonly CommonBackendApiConfig _config;
-    private readonly string _logPrefix;
-
-    public PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOptions<CommonBackendApiConfig> config)
-    {
-        _logger = logger;
-        _httpClient = httpClient;
-        _config = config.Value;
-        _logPrefix = nameof(PrnService);
-    }
-
     public async Task ProcessApprovedSubmission(string submissions)
     {
         try
         {
             if (string.IsNullOrEmpty(submissions))
             {
-                _logger.LogInformation("[{LogPrefix}]: Submissions message is empty", _logPrefix);
+                logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions message is empty", config.Value.LogPrefix);
             }
             else
             {
@@ -36,16 +23,20 @@ public class PrnService : IPrnService
                 if (submissionEntities != null)
                 {
                     var organisationId = submissionEntities[0].OrganisationId;
-                    string prnCalculateEndPoint = string.Format(_config.PrnCalculateEndPoint, organisationId);
-                    var response = await _httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissionEntities);
+                    string prnCalculateEndPoint = string.Format(config.Value.PrnCalculateEndPoint, organisationId);
+                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request being sent to Endpoint : {Endpoint}, Submissions : {Submissions}", config.Value.LogPrefix, prnCalculateEndPoint, submissions);
+
+                    var response = await httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissions);
+                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions response received : {Response}", config.Value.LogPrefix, JsonConvert.SerializeObject(response));
+                    
                     response.EnsureSuccessStatusCode();
-                    _logger.LogInformation("[{LogPrefix}]: Submissions message is posted to backend", _logPrefix);
+                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions message is posted to backend", config.Value.LogPrefix);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{LogPrefix}]: Error while submitting submissions data to endpoint {Endpoint}", _logPrefix, _config.PrnCalculateEndPoint);
+            logger.LogError(ex, "{LogPrefix}: PrnService - ProcessApprovedSubmission - Error while submitting submissions data to endpoint {Endpoint}", config.Value.LogPrefix, config.Value.PrnCalculateEndPoint);
             throw;
         }
     }

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace EPR.PRN.ObligationCalculation.Function.Tests;
+namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
 
 [TestClass()]
 public class StoreApprovedSubmissionsFunctionTests
@@ -43,8 +43,8 @@ public class StoreApprovedSubmissionsFunctionTests
     }
 
     [TestMethod]
-    [DataRow(true, "2024-01-01", 3)]
-    [DataRow(false, "2024-10-10", 3)]
+    [DataRow(true, "2024-01-01", 6)]
+    [DataRow(false, "2024-10-10", 6)]
     public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(bool useDefaultRunDate, string lastSuccessfulRunDate, int logInformationCount)
     {
         // Arrange
