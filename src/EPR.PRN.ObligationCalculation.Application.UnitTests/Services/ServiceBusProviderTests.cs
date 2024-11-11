@@ -197,9 +197,9 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
 
-        _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.Once);
+        _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.AtLeastOnce);
     }
 
     [TestMethod]

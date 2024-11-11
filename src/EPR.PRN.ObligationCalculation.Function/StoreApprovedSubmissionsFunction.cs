@@ -50,7 +50,7 @@ public class StoreApprovedSubmissionsFunction
             var approvedSubmissionEntities = await _submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
             _logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Approved submission entities retrieved from backnend {ApprovedSubmissionEntities}", _config.LogPrefix, JsonConvert.SerializeObject(approvedSubmissionEntities));
 
-            _logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Sending Approved submission entities to queue...}", _config.LogPrefix);
+            _logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Sending Approved submission entities to queue...", _config.LogPrefix);
             await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities);
 
             var currectRunDate = DateTime.Now.Date.ToString("yyyy-MM-dd");
