@@ -1,5 +1,4 @@
-﻿using Azure;
-using Azure.Messaging.ServiceBus;
+﻿using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using Microsoft.Extensions.Logging;

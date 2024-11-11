@@ -1,7 +1,6 @@
 ﻿#nullable disable
 
 using AutoFixture;
-using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
