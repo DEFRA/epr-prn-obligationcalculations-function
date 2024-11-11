@@ -19,7 +19,7 @@ public class ProcessApprovedSubmissionsFunction
     }
 
     [Function("ProcessApprovedSubmissionsFunction")]
-    public async Task RunAsync([ServiceBusTrigger("%ServiceBus:ObligationQueueName%", Connection = "")] ServiceBusReceivedMessage message)
+    public async Task RunAsync([ServiceBusTrigger("%ServiceBus:ObligationQueueName%", Connection = "ServiceBus:Namespace")] ServiceBusReceivedMessage message)
     {
         try
         {

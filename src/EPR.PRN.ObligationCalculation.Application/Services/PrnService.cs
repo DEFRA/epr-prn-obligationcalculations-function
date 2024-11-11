@@ -37,7 +37,7 @@ public class PrnService : IPrnService
                 {
                     var organisationId = submissionEntities[0].OrganisationId;
                     string prnCalculateEndPoint = string.Format(_config.PrnCalculateEndPoint, organisationId);
-                    var response = await _httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissions);
+                    var response = await _httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissionEntities);
                     response.EnsureSuccessStatusCode();
                     _logger.LogInformation("[{LogPrefix}]: Submissions message is posted to backend", _logPrefix);
                 }
