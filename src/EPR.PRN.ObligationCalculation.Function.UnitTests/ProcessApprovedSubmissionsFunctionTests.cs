@@ -1,7 +1,9 @@
 ﻿#nullable disable
+using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.UnitTests.Helpers;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
@@ -12,6 +14,7 @@ public class ProcessApprovedSubmissionsFunctionTests
     private Mock<ILogger<ProcessApprovedSubmissionsFunction>> _loggerMock;
     private Mock<IPrnService> _prnServiceMock;
     private ProcessApprovedSubmissionsFunction _function;
+    private Mock<IOptions<ApplicationConfig>> _configMock;
 
     [TestInitialize]
     public void Setup()
@@ -19,7 +22,16 @@ public class ProcessApprovedSubmissionsFunctionTests
         _loggerMock = new Mock<ILogger<ProcessApprovedSubmissionsFunction>>();
         _prnServiceMock = new Mock<IPrnService>();
 
-        _function = new ProcessApprovedSubmissionsFunction(_loggerMock.Object, _prnServiceMock.Object);
+        _configMock = new Mock<IOptions<ApplicationConfig>>();
+        var config = new ApplicationConfig
+        {
+            UseDefaultRunDate = false,
+            DefaultRunDate = "2024-01-01"
+        };
+
+        _configMock.Setup(c => c.Value).Returns(config);
+
+        _function = new ProcessApprovedSubmissionsFunction(_loggerMock.Object, _prnServiceMock.Object, _configMock.Object);
     }
 
     [TestMethod]

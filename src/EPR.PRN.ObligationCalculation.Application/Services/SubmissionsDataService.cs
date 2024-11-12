@@ -7,43 +7,33 @@ using System.Net;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
-public class SubmissionsDataService : ISubmissionsDataService
+public class SubmissionsDataService(ILogger<SubmissionsDataService> logger, HttpClient httpClient, IOptions<CommonDataApiConfig> config) : ISubmissionsDataService
 {
-    private readonly ILogger<SubmissionsDataService> _logger;
-    private readonly HttpClient _httpClient;
-    private readonly CommonDataApiConfig _config;
-
-    public SubmissionsDataService(ILogger<SubmissionsDataService> logger, HttpClient httpClient, IOptions<CommonDataApiConfig> config)
-    {
-        _logger = logger;
-        _httpClient = httpClient;
-        _config = config.Value;
-    }
 
     public async Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string lastSuccessfulRunDate)
     {
-        _logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Get Approved Submissions Data from {LastSuccessfulRunDate}", _config.LogPrefix, lastSuccessfulRunDate);
+        logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Get Approved Submissions Data from {LastSuccessfulRunDate}", config.Value.LogPrefix, lastSuccessfulRunDate);
         
-        string endpoint = _config.SubmissionsEndPoint + lastSuccessfulRunDate;
-        _logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Fetching Submissions data from: {Endpoint}", _config.LogPrefix, endpoint);
+        string endpoint = config.Value.SubmissionsEndPoint + lastSuccessfulRunDate;
+        logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Fetching Submissions data from: {Endpoint}", config.Value.LogPrefix, endpoint);
 
         try
         {
             var result = await GetDataAsync(endpoint);
-            _logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Received approved submissions from data API {Result}", _config.LogPrefix, JsonConvert.SerializeObject(result));
+            logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Received approved submissions from data API {Result}", config.Value.LogPrefix, JsonConvert.SerializeObject(result));
             var submissionEntities = JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(result);
             return submissionEntities ?? [];
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Error while getting submissions data from {Endpoint}", _config.LogPrefix, endpoint);
+            logger.LogError(ex, "{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Error while getting submissions data from {Endpoint}", config.Value.LogPrefix, endpoint);
             throw;
         }
     }
 
     private async Task<string> GetDataAsync(string endpoint)
     {
-        var response = await _httpClient.GetAsync(endpoint);
+        var response = await httpClient.GetAsync(endpoint);
         return response.StatusCode.HasFlag(HttpStatusCode.OK) ? await response.Content.ReadAsStringAsync() : string.Empty;
     }
 }

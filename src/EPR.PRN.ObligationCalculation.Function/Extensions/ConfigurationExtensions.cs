@@ -49,7 +49,7 @@ public static class ConfigurationExtensions
                     options.TransportType = ServiceBusTransportType.AmqpWebSockets;
                     var sp = services.BuildServiceProvider();
                     var serviceBusConfig = sp.GetRequiredService<IOptions<ServiceBusConfig>>().Value;
-                    return new(serviceBusConfig.Namespace, new DefaultAzureCredential(), options);
+                    return new(serviceBusConfig.FullyQualifiedNamespace, new DefaultAzureCredential(), options);
                 });
             });
         }

@@ -1,23 +1,23 @@
 {
-  "IsEncrypted": false,
-  "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "CommonDataApi__BaseUrl": "UseDevelopmentStorage=true",
-    "CommonDataApi__SubmissionsEndPoint": "UseDevelopmentStorage=true",
-    "CommonDataApi__LogPrefix": "[EPR.PRN.ObligationCalulation]",
-    "CommonBackendApi__LogPrefix": "[EPR.PRN.ObligationCalulation]",
-    "CommonBackendApi__BaseUrl": "UseDevelopmentStorage=true",
-    "CommonBackendApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
-    "ServiceBus__Namespace": "UseDevelopmentStorage=true",
-    "ServiceBus__ObligationQueueName": "UseDevelopmentStorage=true",
-    "ServiceBus__ObligationLastSuccessfulRunQueueName": "UseDevelopmentStorage=true",
-    "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",
-    "ServiceBus__LogPrefix": "[EPR.PRN.ObligationCalulation]",
-    "ApplicationConfig__LogPrefix": "[EPR.PRN.ObligationCalulation]",
-    "ApplicationConfig__DeveloperMode": false,
-    "ApplicationConfig__UseDefaultRunDate": "UseDevelopmentStorage=true",
-    "ApplicationConfig__DefaultRunDate": "UseDevelopmentStorage=true",
-    "StoreApprovedSubmissions__Schedule": "0 0 * * * MON-FRI"
-  }
+    "IsEncrypted": false,
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        "CommonDataApi__BaseUrl": "UseDevelopmentStorage=true",
+        "CommonDataApi__SubmissionsEndPoint": "UseDevelopmentStorage=true",
+        "CommonDataApi__LogPrefix": "[EPR.PRN.ObligationCalulation]",
+        "CommonBackendApi__LogPrefix": "[EPR.PRN.ObligationCalulation]",
+        "CommonBackendApi__BaseUrl": "UseDevelopmentStorage=true",
+        "CommonBackendApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
+        "ServiceBus__FullyQualifiedNamespace": "UseDevelopmentStorage=true",
+        "ServiceBus__ObligationQueueName": "UseDevelopmentStorage=true",
+        "ServiceBus__ObligationLastSuccessfulRunQueueName": "UseDevelopmentStorage=true",
+        "ServiceBus__ConnectionString": "UseDevelopmentStorage=true",
+        "ServiceBus__LogPrefix": "[EPR.PRN.ObligationCalulation]",
+        "ApplicationConfig__LogPrefix": "[EPR.PRN.ObligationCalulation]",
+        "ApplicationConfig__DeveloperMode": false,
+        "ApplicationConfig__UseDefaultRunDate": "UseDevelopmentStorage=true",
+        "ApplicationConfig__DefaultRunDate": "UseDevelopmentStorage=true",
+        "StoreApprovedSubmissions__Schedule": "0 0 * * * MON-FRI"
+    }
 }

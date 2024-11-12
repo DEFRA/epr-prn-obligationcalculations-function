@@ -1,7 +1,6 @@
 ﻿#nullable disable
 
 using AutoFixture;
-using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
@@ -10,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace EPR.PRN.ObligationCalculation.Function.Tests;
+namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
 
 [TestClass()]
 public class StoreApprovedSubmissionsFunctionTests
