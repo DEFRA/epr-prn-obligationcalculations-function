@@ -19,7 +19,6 @@ public class SubmissionsDataServiceTests
     private SubmissionsDataService _service;
 
     private readonly string _lastSuccessfulRunDate = "2023-09-01";
-    private string _submissionsEndpoint = string.Empty;
 
     [TestInitialize]
     public void Setup()
@@ -34,7 +33,6 @@ public class SubmissionsDataServiceTests
             SubmissionsEndPoint = "submissions"
         };
         _configMock.Setup(c => c.Value).Returns(config);
-        _submissionsEndpoint = $"{_configMock.Object.Value.SubmissionsEndPoint}{_lastSuccessfulRunDate}";
 
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
         {
@@ -88,7 +86,7 @@ public class SubmissionsDataServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.NotFound,
+                StatusCode = HttpStatusCode.NoContent,
                 Content = new StringContent(string.Empty)
             });
 
