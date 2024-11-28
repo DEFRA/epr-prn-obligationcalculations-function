@@ -19,7 +19,6 @@ public class SubmissionsDataServiceTests
     private SubmissionsDataService _service;
 
     private readonly string _lastSuccessfulRunDate = "2023-09-01";
-    private string _submissionsEndpoint = string.Empty;
 
     [TestInitialize]
     public void Setup()
@@ -27,15 +26,14 @@ public class SubmissionsDataServiceTests
         _loggerMock = new Mock<ILogger<SubmissionsDataService>>();
         _configMock = new Mock<IOptions<CommonDataApiConfig>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-
+        
         var config = new CommonDataApiConfig
         {
             BaseUrl = "https://api.example.com/",
             SubmissionsEndPoint = "submissions"
         };
         _configMock.Setup(c => c.Value).Returns(config);
-        _submissionsEndpoint = $"{_configMock.Object.Value.SubmissionsEndPoint}{_lastSuccessfulRunDate}";
-
+        
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
         {
             BaseAddress = new Uri(_configMock.Object.Value.BaseUrl)
@@ -88,7 +86,7 @@ public class SubmissionsDataServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.NotFound,
+                StatusCode = HttpStatusCode.NoContent,
                 Content = new StringContent(string.Empty)
             });
 

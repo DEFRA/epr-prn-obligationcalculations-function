@@ -13,13 +13,15 @@ public class SubmissionsDataService(ILogger<SubmissionsDataService> logger, Http
     public async Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string lastSuccessfulRunDate)
     {
         logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Get Approved Submissions Data from {LastSuccessfulRunDate}", config.Value.LogPrefix, lastSuccessfulRunDate);
-        
+
         string endpoint = config.Value.SubmissionsEndPoint + lastSuccessfulRunDate;
         logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Fetching Submissions data from: {Endpoint}", config.Value.LogPrefix, endpoint);
 
         try
         {
-            var result = await GetDataAsync(endpoint);
+            var response = await httpClient.GetAsync(endpoint);
+            response.EnsureSuccessStatusCode();
+            var result = await response.Content.ReadAsStringAsync();
             logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Received approved submissions from data API {Result}", config.Value.LogPrefix, JsonConvert.SerializeObject(result));
             var submissionEntities = JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(result);
             return submissionEntities ?? [];
@@ -29,11 +31,5 @@ public class SubmissionsDataService(ILogger<SubmissionsDataService> logger, Http
             logger.LogError(ex, "{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Error while getting submissions data from {Endpoint}", config.Value.LogPrefix, endpoint);
             throw;
         }
-    }
-
-    private async Task<string> GetDataAsync(string endpoint)
-    {
-        var response = await httpClient.GetAsync(endpoint);
-        return response.StatusCode.HasFlag(HttpStatusCode.OK) ? await response.Content.ReadAsStringAsync() : string.Empty;
     }
 }
