@@ -16,18 +16,11 @@ public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFu
         {
             logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: New session started", config.Value.LogPrefix);
 
-            var lastSuccessfulRunDate = string.Empty;
-            if (config.Value.UseDefaultRunDate)
-            {
-                lastSuccessfulRunDate = config.Value.DefaultRunDate;
-                logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Last run date {Date} used from configuration values", config.Value.LogPrefix, lastSuccessfulRunDate);
-            }
-            else
-            {
-                lastSuccessfulRunDate = await serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
-                logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Last run date {Date} retrieved from queue", config.Value.LogPrefix, lastSuccessfulRunDate);
-            }
+            var lastSuccessfulRunDateFromQueue = await serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Last run date {Date} retrieved from queue", config.Value.LogPrefix, lastSuccessfulRunDateFromQueue);
 
+            var lastSuccessfulRunDate = string.IsNullOrEmpty(lastSuccessfulRunDateFromQueue) ? config.Value.DefaultRunDate : lastSuccessfulRunDateFromQueue;
+            
             if (string.IsNullOrEmpty(lastSuccessfulRunDate))
             {
                 logger.LogError("{LogPrefix}: StoreApprovedSubmissionsFunction: Last succesful run date is empty and function is terminated", config.Value.LogPrefix);

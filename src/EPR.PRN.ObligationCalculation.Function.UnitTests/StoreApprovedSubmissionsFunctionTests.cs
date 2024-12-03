@@ -1,8 +1,6 @@
 ﻿#nullable disable
 
-using AutoFixture;
 using EPR.PRN.ObligationCalculation.Application.Configs;
-using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -14,7 +12,6 @@ namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
 [TestClass()]
 public class StoreApprovedSubmissionsFunctionTests
 {
-    private Fixture _fixture;
     private Mock<ISubmissionsDataService> _submissionsDataService;
     private Mock<ILogger<StoreApprovedSubmissionsFunction>> _loggerMock;
     private Mock<IServiceBusProvider> _serviceBusProviderMock;
@@ -25,7 +22,6 @@ public class StoreApprovedSubmissionsFunctionTests
     [TestInitialize]
     public void TestInitialize()
     {
-        _fixture = new Fixture();
         _timerInfo = new TimerInfo();
         _loggerMock = new Mock<ILogger<StoreApprovedSubmissionsFunction>>();
         _submissionsDataService = new Mock<ISubmissionsDataService>();
@@ -34,7 +30,6 @@ public class StoreApprovedSubmissionsFunctionTests
         _configMock = new Mock<IOptions<ApplicationConfig>>();
         var config = new ApplicationConfig
         {
-            UseDefaultRunDate = false,
             DefaultRunDate = "2024-01-01"
         };
 
@@ -42,31 +37,20 @@ public class StoreApprovedSubmissionsFunctionTests
     }
 
     [TestMethod]
-    [DataRow(true, "2024-01-01", 6)]
-    [DataRow(false, "2024-10-10", 6)]
-    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(bool useDefaultRunDate, string lastSuccessfulRunDate, int logInformationCount)
+    [DataRow("", 6)]
+    [DataRow(null, 6)]
+    [DataRow("2024-10-10", 6)]
+    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(string lastSuccessfulRunDateFromQueue, int logInformationCount)
     {
         // Arrange
-        _configMock.Object.Value.UseDefaultRunDate = useDefaultRunDate;
         _function = new StoreApprovedSubmissionsFunction(
             _loggerMock.Object,
             _submissionsDataService.Object,
             _serviceBusProviderMock.Object,
             _configMock.Object);
 
-        var currentRunDate = DateTime.Now.Date.ToString();
-        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDate);
-        var approvedSubmissionEntities = _fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
-        _submissionsDataService
-            .Setup(x => x.GetApprovedSubmissionsData(lastSuccessfulRunDate))
-            .ReturnsAsync(approvedSubmissionEntities);
-        _serviceBusProviderMock
-            .Setup(x => x.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities))
-            .Returns(Task.CompletedTask);
-        _serviceBusProviderMock
-            .Setup(x => x.SendSuccessfulRunDateToQueue(currentRunDate))
-            .Returns(Task.CompletedTask);
-
+        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDateFromQueue);
+ 
         // Act
         await _function.RunAsync(_timerInfo);
 
@@ -80,14 +64,11 @@ public class StoreApprovedSubmissionsFunctionTests
     }
 
     [TestMethod]
-    [DataRow(true, null)]
-    [DataRow(false, null)]
-    [DataRow(true, "")]
-    [DataRow(false, "")]
-    public async Task RunAsync_Terminated_WhenRunDateIsNullOrEmpty(bool useDefaultRunDate, string lastSuccessfulRunDate)
+    [DataRow(null)]
+    [DataRow("")]
+    public async Task RunAsync_Terminated_WhenRunDateIsNullOrEmpty(string lastSuccessfulRunDate)
     {
         // Arrange
-        _configMock.Object.Value.UseDefaultRunDate = useDefaultRunDate;
         _configMock.Object.Value.DefaultRunDate = lastSuccessfulRunDate;
         _function = new StoreApprovedSubmissionsFunction(
             _loggerMock.Object,
@@ -107,9 +88,7 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(1));
-
     }
-
 
     [TestMethod]
     public async Task RunAsync_ShouldHandleException_WhenErrorOccurs()

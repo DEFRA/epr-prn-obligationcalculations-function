@@ -25,7 +25,6 @@ public class ProcessApprovedSubmissionsFunctionTests
         _configMock = new Mock<IOptions<ApplicationConfig>>();
         var config = new ApplicationConfig
         {
-            UseDefaultRunDate = false,
             DefaultRunDate = "2024-01-01"
         };
 
