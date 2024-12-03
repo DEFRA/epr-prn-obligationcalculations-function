@@ -1,6 +1,5 @@
 ﻿#nullable disable
 
-using AutoFixture;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
@@ -13,7 +12,6 @@ namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
 [TestClass()]
 public class StoreApprovedSubmissionsFunctionTests
 {
-    private Fixture _fixture;
     private Mock<ISubmissionsDataService> _submissionsDataService;
     private Mock<ILogger<StoreApprovedSubmissionsFunction>> _loggerMock;
     private Mock<IServiceBusProvider> _serviceBusProviderMock;
@@ -24,7 +22,6 @@ public class StoreApprovedSubmissionsFunctionTests
     [TestInitialize]
     public void TestInitialize()
     {
-        _fixture = new Fixture();
         _timerInfo = new TimerInfo();
         _loggerMock = new Mock<ILogger<StoreApprovedSubmissionsFunction>>();
         _submissionsDataService = new Mock<ISubmissionsDataService>();
@@ -53,7 +50,7 @@ public class StoreApprovedSubmissionsFunctionTests
             _configMock.Object);
 
         _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDateFromQueue);
-
+ 
         // Act
         await _function.RunAsync(_timerInfo);
 
@@ -64,6 +61,36 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(logInformationCount));
+    }
+
+
+
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
+    public async Task RunAsync_Terminated_WhenRunDateIsNullOrEmpty(string lastSuccessfulRunDate)
+    {
+        // Arrange
+        _configMock.Object.Value.DefaultRunDate = lastSuccessfulRunDate;
+        _function = new StoreApprovedSubmissionsFunction(
+            _loggerMock.Object,
+            _submissionsDataService.Object,
+            _serviceBusProviderMock.Object,
+            _configMock.Object);
+
+        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDate);
+
+        // Act
+        await _function.RunAsync(_timerInfo);
+
+        // Assert
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Error,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(1));
+
     }
 
     [TestMethod]

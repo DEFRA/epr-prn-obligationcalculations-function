@@ -20,6 +20,12 @@ public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFu
             logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Last run date {Date} retrieved from queue", config.Value.LogPrefix, lastSuccessfulRunDateFromQueue);
 
             var lastSuccessfulRunDate = string.IsNullOrEmpty(lastSuccessfulRunDateFromQueue) ? config.Value.DefaultRunDate : lastSuccessfulRunDateFromQueue;
+            
+            if (string.IsNullOrEmpty(lastSuccessfulRunDate))
+            {
+                logger.LogError("{LogPrefix}: StoreApprovedSubmissionsFunction: Last succesful run date is empty and function is terminated", config.Value.LogPrefix);
+                return;
+            }
 
             var approvedSubmissionEntities = await submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
             logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Approved submission entities retrieved from backnend {ApprovedSubmissionEntities}", config.Value.LogPrefix, JsonConvert.SerializeObject(approvedSubmissionEntities));
