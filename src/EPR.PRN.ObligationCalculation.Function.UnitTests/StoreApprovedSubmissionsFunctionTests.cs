@@ -63,8 +63,6 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(logInformationCount));
     }
 
-
-
     [TestMethod]
     [DataRow(null)]
     [DataRow("")]
@@ -90,7 +88,6 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(1));
-
     }
 
     [TestMethod]

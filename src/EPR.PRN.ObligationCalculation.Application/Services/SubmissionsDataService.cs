@@ -3,7 +3,6 @@ using EPR.PRN.ObligationCalculation.Application.DTOs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Net;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
