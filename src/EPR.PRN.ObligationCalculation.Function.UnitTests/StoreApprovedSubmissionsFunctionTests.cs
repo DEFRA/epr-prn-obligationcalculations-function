@@ -2,7 +2,6 @@
 
 using AutoFixture;
 using EPR.PRN.ObligationCalculation.Application.Configs;
-using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -34,7 +33,6 @@ public class StoreApprovedSubmissionsFunctionTests
         _configMock = new Mock<IOptions<ApplicationConfig>>();
         var config = new ApplicationConfig
         {
-            UseDefaultRunDate = false,
             DefaultRunDate = "2024-01-01"
         };
 
@@ -42,30 +40,19 @@ public class StoreApprovedSubmissionsFunctionTests
     }
 
     [TestMethod]
-    [DataRow(true, "2024-01-01", 6)]
-    [DataRow(false, "2024-10-10", 6)]
-    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(bool useDefaultRunDate, string lastSuccessfulRunDate, int logInformationCount)
+    [DataRow("", 6)]
+    [DataRow(null, 6)]
+    [DataRow("2024-10-10", 6)]
+    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(string lastSuccessfulRunDateFromQueue, int logInformationCount)
     {
         // Arrange
-        _configMock.Object.Value.UseDefaultRunDate = useDefaultRunDate;
         _function = new StoreApprovedSubmissionsFunction(
             _loggerMock.Object,
             _submissionsDataService.Object,
             _serviceBusProviderMock.Object,
             _configMock.Object);
 
-        var currentRunDate = DateTime.Now.Date.ToString();
-        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDate);
-        var approvedSubmissionEntities = _fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
-        _submissionsDataService
-            .Setup(x => x.GetApprovedSubmissionsData(lastSuccessfulRunDate))
-            .ReturnsAsync(approvedSubmissionEntities);
-        _serviceBusProviderMock
-            .Setup(x => x.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities))
-            .Returns(Task.CompletedTask);
-        _serviceBusProviderMock
-            .Setup(x => x.SendSuccessfulRunDateToQueue(currentRunDate))
-            .Returns(Task.CompletedTask);
+        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDateFromQueue);
 
         // Act
         await _function.RunAsync(_timerInfo);
@@ -78,38 +65,6 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(logInformationCount));
     }
-
-    [TestMethod]
-    [DataRow(true, null)]
-    [DataRow(false, null)]
-    [DataRow(true, "")]
-    [DataRow(false, "")]
-    public async Task RunAsync_Terminated_WhenRunDateIsNullOrEmpty(bool useDefaultRunDate, string lastSuccessfulRunDate)
-    {
-        // Arrange
-        _configMock.Object.Value.UseDefaultRunDate = useDefaultRunDate;
-        _configMock.Object.Value.DefaultRunDate = lastSuccessfulRunDate;
-        _function = new StoreApprovedSubmissionsFunction(
-            _loggerMock.Object,
-            _submissionsDataService.Object,
-            _serviceBusProviderMock.Object,
-            _configMock.Object);
-
-        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDate);
-
-        // Act
-        await _function.RunAsync(_timerInfo);
-
-        // Assert
-        _loggerMock.Verify(l => l.Log(
-            LogLevel.Error,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(1));
-
-    }
-
 
     [TestMethod]
     public async Task RunAsync_ShouldHandleException_WhenErrorOccurs()

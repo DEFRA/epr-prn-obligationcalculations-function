@@ -25,20 +25,23 @@ To run locally, create a file `local.settings.json`. This file is in `.gitignore
 {
     "IsEncrypted": false,
     "Values": {
-		"AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
         "CommonDataApi__BaseUrl": "",
         "CommonDataApi__SubmissionsEndPoint": "api/submissions/v1/pom/approved/",
+        "CommonDataApi__LogPrefix": "[EPR.PRN.ObligationCalulation]",
+        "CommonBackendApi__LogPrefix": "[EPR.PRN.ObligationCalulation]",
         "CommonBackendApi__BaseUrl": "",
         "CommonBackendApi__PrnCalculateEndPoint": "api/v1/prn/organisation/{0}/calculate",
-        "ServiceBus__Namespace": "",
+        "ServiceBus__FullyQualifiedNamespace": "",
         "ServiceBus__ObligationQueueName": "",
         "ServiceBus__ObligationLastSuccessfulRunQueueName": "",
         "ServiceBus__ConnectionString": "",
+        "ServiceBus__LogPrefix": "[EPR.PRN.ObligationCalulation]",
+        "ApplicationConfig__LogPrefix": "[EPR.PRN.ObligationCalulation]",
         "ApplicationConfig__DeveloperMode": true,
-        "ApplicationConfig__UseDefaultRunDate": true,
         "ApplicationConfig__DefaultRunDate": "2024-01-01",
-        "StoreApprovedSubmissions__Schedule": "0 */30 * * * *"
+        "StoreApprovedSubmissions__Schedule": "0/30 * * * * *"
     }
 }
 ```
