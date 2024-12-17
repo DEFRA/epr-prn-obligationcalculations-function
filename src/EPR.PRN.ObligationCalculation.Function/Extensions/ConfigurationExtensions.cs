@@ -9,6 +9,9 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Extensions.Http;
+using Polly.Retry;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 
@@ -64,15 +67,19 @@ public static class ConfigurationExtensions
             var config = sp.GetRequiredService<IOptions<CommonDataApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
+        }).AddPolicyHandler(GetRetryPolicy());
 
         services.AddHttpClient<IPrnService, PrnService>((sp, c) =>
         {
             var config = sp.GetRequiredService<IOptions<CommonBackendApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        });
+        }).AddPolicyHandler(GetRetryPolicy());
 
         return services;
     }
+
+    private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy() => HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)));
 }
