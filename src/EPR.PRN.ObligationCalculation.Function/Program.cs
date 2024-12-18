@@ -25,7 +25,7 @@ namespace EPR.PRN.ObligationCalculation.Function
             services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
             services.ConfigureOptions(hostingContext.Configuration);
             services.AddHttpClients();
-            services.AddAzureClients(hostingContext.Configuration);
+            services.AddAzureClients();
         })
         .Build();
 

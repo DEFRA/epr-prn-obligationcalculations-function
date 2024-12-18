@@ -26,7 +26,7 @@ public static class ConfigurationExtensions
         return services;
     }
 
-    public static IServiceCollection AddAzureClients(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAzureClients(this IServiceCollection services)
     {
         services.AddAzureClients(clientBuilder =>
             {
