@@ -1,6 +1,4 @@
-﻿#nullable disable
-
-using EPR.PRN.ObligationCalculation.Application.Configs;
+﻿using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -12,12 +10,12 @@ namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
 [TestClass()]
 public class StoreApprovedSubmissionsFunctionTests
 {
-    private Mock<ISubmissionsDataService> _submissionsDataService;
-    private Mock<ILogger<StoreApprovedSubmissionsFunction>> _loggerMock;
-    private Mock<IServiceBusProvider> _serviceBusProviderMock;
-    private Mock<IOptions<ApplicationConfig>> _configMock;
-    private StoreApprovedSubmissionsFunction _function;
-    private TimerInfo _timerInfo;
+    private Mock<ISubmissionsDataService> _submissionsDataService = null!;
+    private Mock<ILogger<StoreApprovedSubmissionsFunction>> _loggerMock = null!;
+    private Mock<IServiceBusProvider> _serviceBusProviderMock = null!;
+    private Mock<IOptions<ApplicationConfig>> _configMock = null!;
+    private StoreApprovedSubmissionsFunction _function = null!;
+    private TimerInfo _timerInfo = null!;
 
     [TestInitialize]
     public void TestInitialize()
@@ -60,7 +58,7 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(logInformationCount));
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(logInformationCount));
     }
 
     [TestMethod]
@@ -87,7 +85,7 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(1));
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(1));
     }
 
     [TestMethod]
@@ -116,6 +114,6 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }
