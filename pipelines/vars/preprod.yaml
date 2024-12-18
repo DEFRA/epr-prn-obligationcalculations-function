@@ -1,5 +1,5 @@
 variables:
-  azureSubscription: 'AZD-RWD-PRE1'
+  azureSubscription: 'AZR-RWD-PRE1'
   docker.imageName: 'eprobligationcalc'
   acr.azureContainerRegistryName: 'prerwdinfac1401'
   acr.repositoryName: 'eprobligationcalcrepository'
