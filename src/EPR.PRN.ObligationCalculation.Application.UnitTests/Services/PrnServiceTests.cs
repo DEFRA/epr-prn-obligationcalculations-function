@@ -33,12 +33,6 @@ public class PrnServiceTests
             BaseUrl = "http://test-url.com/",
             PrnCalculateEndPoint = "api/calculate/{0}"
         };
-        _loggerMock.Setup(l => l.Log(
-            It.IsAny<LogLevel>(),
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()));
 
         _configMock.Setup(c => c.Value).Returns(_config);
 

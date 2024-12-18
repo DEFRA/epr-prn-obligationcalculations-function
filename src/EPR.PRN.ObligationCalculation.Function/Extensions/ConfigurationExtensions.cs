@@ -1,7 +1,4 @@
-﻿namespace EPR.PRN.ObligationCalculation.Function.Extensions;
-
-using Azure.Core;
-using Azure.Identity;
+﻿using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.Services;
@@ -14,6 +11,8 @@ using Polly.Extensions.Http;
 using Polly.Retry;
 using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
+
+namespace EPR.PRN.ObligationCalculation.Function.Extensions;
 
 [ExcludeFromCodeCoverage]
 public static class ConfigurationExtensions
@@ -29,23 +28,7 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddAzureClients(this IServiceCollection services, IConfiguration configuration)
     {
-        var isDevMode = configuration.GetValue<bool?>("ApplicationConfig:DeveloperMode");
-        if (isDevMode is true)
-        {
-            services.AddAzureClients(clientBuilder =>
-            {
-                clientBuilder.AddClient<ServiceBusClient, ServiceBusClientOptions>(options =>
-                {
-                    options.TransportType = ServiceBusTransportType.AmqpWebSockets;
-                    var sp = services.BuildServiceProvider();
-                    var serviceBusConfig = sp.GetRequiredService<IOptions<ServiceBusConfig>>().Value;
-                    return new(serviceBusConfig.ConnectionString, options);
-                });
-            });
-        }
-        else
-        {
-            services.AddAzureClients(clientBuilder =>
+        services.AddAzureClients(clientBuilder =>
             {
                 clientBuilder.AddClient<ServiceBusClient, ServiceBusClientOptions>(options =>
                 {
@@ -55,7 +38,6 @@ public static class ConfigurationExtensions
                     return new(serviceBusConfig.FullyQualifiedNamespace, new DefaultAzureCredential(), options);
                 });
             });
-        }
 
         return services;
     }
