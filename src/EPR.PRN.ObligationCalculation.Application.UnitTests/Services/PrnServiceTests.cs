@@ -1,5 +1,4 @@
-﻿#nullable disable
-using System.Net;
+﻿using System.Net;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using EPR.PRN.ObligationCalculation.Application.Configs;
@@ -14,18 +13,18 @@ namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
 [TestClass]
 public class PrnServiceTests
 {
-    private Mock<ILogger<PrnService>> _loggerMock;
-    private Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private Mock<IOptions<CommonBackendApiConfig>> _configMock;
-    private HttpClient _httpClient;
-    private PrnService _prnService;
-    private CommonBackendApiConfig _config;
+    private Mock<ILogger<PrnService>> _loggerMock = null!;
+    private Mock<HttpMessageHandler> _httpMessageHandlerMock = null!;
+    private Mock<IOptions<CommonBackendApiConfig>> _configMock = null!;
+    private HttpClient _httpClient = null!;
+    private PrnService _prnService = null!;
+    private CommonBackendApiConfig _config = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _loggerMock = new Mock<ILogger<PrnService>>();
-        _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+        _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         _configMock = new Mock<IOptions<CommonBackendApiConfig>>();
 
         // Setup config
@@ -60,7 +59,7 @@ public class PrnServiceTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(1));
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(1));
     }
 
     [TestMethod]
@@ -92,12 +91,11 @@ public class PrnServiceTests
             .Verify(
                 "SendAsync",
                 Times.Once(),
-                ItExpr.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Post && r.RequestUri.ToString().Contains(_config.BaseUrl)),
+                ItExpr.Is<HttpRequestMessage>(r => r.Method == HttpMethod.Post && r.RequestUri!.ToString().Contains(_config.BaseUrl)),
                 ItExpr.IsAny<CancellationToken>());
     }
 
     [TestMethod]
-    [ExpectedException(typeof(HttpRequestException))]
     public async Task ProcessApprovedSubmission_ShouldThrowHttpRequestException_WhenUnsuccesfulResponse()
     {
         // Arrange
@@ -105,8 +103,6 @@ public class PrnServiceTests
         {
             new() { OrganisationId = Guid.NewGuid() }
         });
-
-        var expectedLogMessage = "Error while submitting submissions data";
 
         _httpMessageHandlerMock
             .Protected()
@@ -119,20 +115,20 @@ public class PrnServiceTests
                 StatusCode = HttpStatusCode.InternalServerError
             });
 
-        // Act
-        await _prnService.ProcessApprovedSubmission(submission);
-
+        // Act & Assert
+        _ = await Assert.ThrowsExceptionAsync<HttpRequestException>(() =>
+            _prnService.ProcessApprovedSubmission(submission));
+        
         // Assert handled by ExpectedException
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()));
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [TestMethod]
-    [ExpectedException(typeof(Exception))]
     public async Task ProcessApprovedSubmission_ShouldThrowException_WhenHttpClientThrowsException()
     {
         // Arrange
@@ -141,8 +137,6 @@ public class PrnServiceTests
             new() { OrganisationId = Guid.NewGuid() }
         });
 
-        var expectedLogMessage = "Error while submitting submissions data";
-
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -150,15 +144,16 @@ public class PrnServiceTests
                 ItExpr.IsAny<CancellationToken>())
             .ThrowsAsync(new Exception("Test Exception"));
 
-        // Act
-        await _prnService.ProcessApprovedSubmission(submission);
+        // Act & Assert
+        _ = await Assert.ThrowsExceptionAsync<Exception>(() =>
+            _prnService.ProcessApprovedSubmission(submission));
 
         // Assert handled by ExpectedException
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(expectedLogMessage)),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()));
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }

@@ -1,26 +1,26 @@
-#nullable disable
 using AutoFixture;
 using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Application.UnitTests.Helpers;
+using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace EPR.PRN.ObligationCalculation.Tests.Services;
+namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
 
 [TestClass]
 public class ServiceBusProviderTests
 {
-    private Mock<ILogger<ServiceBusProvider>> _loggerMock;
-    private Mock<ServiceBusClient> _serviceBusClientMock;
-    private Mock<IOptions<ServiceBusConfig>> _configMock;
-    private Mock<ServiceBusSender> _serviceBusSenderMock;
-    private ServiceBusProvider _serviceBusProvider;
-    private Mock<ServiceBusReceiver> _serviceBusReceiverMock;
-    private Fixture fixture;
+    private Mock<ILogger<ServiceBusProvider>> _loggerMock = null!;
+    private Mock<ServiceBusClient> _serviceBusClientMock = null!;
+    private Mock<IOptions<ServiceBusConfig>> _configMock = null!;
+    private Mock<ServiceBusSender> _serviceBusSenderMock = null!;
+    private ServiceBusProvider _serviceBusProvider = null!;
+    private Mock<ServiceBusReceiver> _serviceBusReceiverMock = null!;
+    private Fixture fixture = null!;
 
     [TestInitialize]
     public void TestInitialize()
@@ -75,7 +75,7 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [TestMethod]
@@ -86,16 +86,21 @@ public class ServiceBusProviderTests
             .With(x => x.OrganisationId, Guid.NewGuid())
             .CreateMany(10)
             .ToList();
+
         int messageCountThreshold = 1;
+
         List<ServiceBusMessage> messageList = [];
         messageList.Add(new ServiceBusMessage());
+
         ServiceBusMessageBatch messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(
             batchSizeBytes: 500,
             batchMessageStore: messageList,
             batchOptions: new CreateMessageBatchOptions(),
             tryAddCallback: _ => messageList.Count < messageCountThreshold);
+
         _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+        
         // Act
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
@@ -106,7 +111,7 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [TestMethod]
@@ -129,7 +134,7 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [TestMethod]
@@ -151,7 +156,7 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [TestMethod]
@@ -186,7 +191,7 @@ public class ServiceBusProviderTests
         var result = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
 
         // Assert
-        Assert.AreEqual(latestDate, result);  // The date from the message with the highest sequence number
+        result.Should().Be(latestDate);  // The date from the message with the highest sequence number
 
         _serviceBusReceiverMock.Verify(r => r.CompleteMessageAsync(
                 It.IsAny<ServiceBusReceivedMessage>(),
@@ -197,7 +202,7 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.AtLeastOnce);
 
         _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.AtLeastOnce);
     }
@@ -219,14 +224,14 @@ public class ServiceBusProviderTests
         var result = await _serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
 
         // Assert
-        Assert.IsNull(result);
+        result.Should().BeNull();
 
         _loggerMock.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
         _serviceBusReceiverMock.Verify(r => r.DisposeAsync(), Times.Once);
     }
@@ -251,7 +256,7 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             exception,
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
         _serviceBusReceiverMock.Verify(sender => sender.DisposeAsync(), Times.Once);
     }
@@ -268,13 +273,16 @@ public class ServiceBusProviderTests
         await _serviceBusProvider.SendSuccessfulRunDateToQueue(runDate);
 
         // Assert
-        _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(It.Is<ServiceBusMessage>(msg => msg.Body.ToString() == runDate), default), Times.Once);
+        _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(
+            It.Is<ServiceBusMessage>(msg => msg.Body.ToString() == runDate),
+            default), Times.Once);
+        
         _loggerMock.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
         _serviceBusSenderMock.Verify(sender => sender.DisposeAsync(), Times.Once);
     }
@@ -288,6 +296,7 @@ public class ServiceBusProviderTests
 
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>()))
                                  .Returns(_serviceBusSenderMock.Object);
+
         _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), default))
                              .ThrowsAsync(exception);
 
@@ -299,7 +308,7 @@ public class ServiceBusProviderTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             exception,
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
         _serviceBusSenderMock.Verify(sender => sender.DisposeAsync(), Times.Once);
     }

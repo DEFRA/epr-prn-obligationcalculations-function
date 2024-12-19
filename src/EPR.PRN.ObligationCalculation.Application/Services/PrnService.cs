@@ -27,7 +27,8 @@ public class PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOpti
                     logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request being sent to Endpoint : {Endpoint}, Submissions : {Submissions}", config.Value.LogPrefix, prnCalculateEndPoint, submissions);
 
                     var response = await httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissionEntities);
-                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions response received : {Response}", config.Value.LogPrefix, JsonConvert.SerializeObject(response));
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions response received : {Response}", config.Value.LogPrefix, responseContent);
                     
                     response.EnsureSuccessStatusCode();
                     logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions message is posted to backend", config.Value.LogPrefix);

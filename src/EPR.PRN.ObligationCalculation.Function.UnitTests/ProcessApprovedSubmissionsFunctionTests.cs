@@ -1,5 +1,4 @@
-﻿#nullable disable
-using EPR.PRN.ObligationCalculation.Application.Configs;
+﻿using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.UnitTests.Helpers;
 using Microsoft.Extensions.Logging;
@@ -11,10 +10,10 @@ namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
 [TestClass]
 public class ProcessApprovedSubmissionsFunctionTests
 {
-    private Mock<ILogger<ProcessApprovedSubmissionsFunction>> _loggerMock;
-    private Mock<IPrnService> _prnServiceMock;
-    private ProcessApprovedSubmissionsFunction _function;
-    private Mock<IOptions<ApplicationConfig>> _configMock;
+    private Mock<ILogger<ProcessApprovedSubmissionsFunction>> _loggerMock = null!;
+    private Mock<IPrnService> _prnServiceMock = null!;
+    private ProcessApprovedSubmissionsFunction _function = null!;
+    private Mock<IOptions<ApplicationConfig>> _configMock = null!;
 
     [TestInitialize]
     public void Setup()
@@ -49,7 +48,7 @@ public class ProcessApprovedSubmissionsFunctionTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             null,
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Exactly(2));
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
     }
 
     [TestMethod]
@@ -69,6 +68,6 @@ public class ProcessApprovedSubmissionsFunctionTests
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.Once);
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }
