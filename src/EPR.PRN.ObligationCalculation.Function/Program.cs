@@ -1,5 +1,6 @@
 using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.Extensions;
+using EPR.PRN.ObligationCalculation.Function.Handlers;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,9 @@ namespace EPR.PRN.ObligationCalculation.Function
             services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
             services.AddScoped<IPrnService, PrnService>();
             services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
-            services.ConfigureOptions(hostingContext.Configuration);
+			services.AddTransient<PrnServiceAuthorisationHandler>();
+			services.AddTransient<SubmissionsServiceAuthorisationHandler>();
+			services.ConfigureOptions(hostingContext.Configuration);
             services.AddHttpClients();
             services.AddAzureClients();
         })

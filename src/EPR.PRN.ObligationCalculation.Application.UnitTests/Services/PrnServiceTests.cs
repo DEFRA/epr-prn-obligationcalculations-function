@@ -15,20 +15,20 @@ public class PrnServiceTests
 {
     private Mock<ILogger<PrnService>> _loggerMock = null!;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock = null!;
-    private Mock<IOptions<CommonBackendApiConfig>> _configMock = null!;
+    private Mock<IOptions<PrnServiceApiConfig>> _configMock = null!;
     private HttpClient _httpClient = null!;
     private PrnService _prnService = null!;
-    private CommonBackendApiConfig _config = null!;
+    private PrnServiceApiConfig _config = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _loggerMock = new Mock<ILogger<PrnService>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        _configMock = new Mock<IOptions<CommonBackendApiConfig>>();
+        _configMock = new Mock<IOptions<PrnServiceApiConfig>>();
 
         // Setup config
-        _config = new CommonBackendApiConfig
+        _config = new PrnServiceApiConfig
         {
             BaseUrl = "http://test-url.com/",
             PrnCalculateEndPoint = "api/calculate/{0}"

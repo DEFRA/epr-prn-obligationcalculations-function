@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
-public class SubmissionsDataService(ILogger<SubmissionsDataService> logger, HttpClient httpClient, IOptions<CommonDataApiConfig> config) : ISubmissionsDataService
+public class SubmissionsDataService(ILogger<SubmissionsDataService> logger, HttpClient httpClient, IOptions<SubmissionsServiceApiConfig> config) : ISubmissionsDataService
 {
 
     public async Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string lastSuccessfulRunDate)

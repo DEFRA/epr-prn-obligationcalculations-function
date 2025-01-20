@@ -13,7 +13,7 @@ namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
 public class SubmissionsDataServiceTests
 {
     private Mock<ILogger<SubmissionsDataService>> _loggerMock = null!;
-    private Mock<IOptions<CommonDataApiConfig>> _configMock = null!;
+    private Mock<IOptions<SubmissionsServiceApiConfig>> _configMock = null!;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock = null!;
     private HttpClient _httpClient = null!;
     private SubmissionsDataService _service = null!;
@@ -24,10 +24,10 @@ public class SubmissionsDataServiceTests
     public void Setup()
     {
         _loggerMock = new Mock<ILogger<SubmissionsDataService>>();
-        _configMock = new Mock<IOptions<CommonDataApiConfig>>();
+        _configMock = new Mock<IOptions<SubmissionsServiceApiConfig>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         
-        var config = new CommonDataApiConfig
+        var config = new SubmissionsServiceApiConfig
         {
             BaseUrl = "https://api.example.com/",
             SubmissionsEndPoint = "submissions"

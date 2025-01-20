@@ -7,7 +7,7 @@ using System.Net.Http.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
-public class PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOptions<CommonBackendApiConfig> config) : IPrnService
+public class PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOptions<PrnServiceApiConfig> config) : IPrnService
 {
     public async Task ProcessApprovedSubmission(string submissions)
     {
