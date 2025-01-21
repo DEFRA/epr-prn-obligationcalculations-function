@@ -2,6 +2,7 @@
 using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.Services;
+using EPR.PRN.ObligationCalculation.Function.Handlers;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,8 +21,8 @@ public static class ConfigurationExtensions
     public static IServiceCollection ConfigureOptions(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ServiceBusConfig>(configuration.GetSection(ServiceBusConfig.SectionName));
-        services.Configure<CommonDataApiConfig>(configuration.GetSection(CommonDataApiConfig.SectionName));
-        services.Configure<CommonBackendApiConfig>(configuration.GetSection(CommonBackendApiConfig.SectionName));
+        services.Configure<SubmissionsServiceApiConfig>(configuration.GetSection(SubmissionsServiceApiConfig.SectionName));
+        services.Configure<PrnServiceApiConfig>(configuration.GetSection(PrnServiceApiConfig.SectionName));
         services.Configure<ApplicationConfig>(configuration.GetSection(ApplicationConfig.SectionName));
         return services;
     }
@@ -46,17 +47,21 @@ public static class ConfigurationExtensions
     {
         services.AddHttpClient<ISubmissionsDataService, SubmissionsDataService>((sp, c) =>
         {
-            var config = sp.GetRequiredService<IOptions<CommonDataApiConfig>>().Value;
+            var config = sp.GetRequiredService<IOptions<SubmissionsServiceApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        }).AddPolicyHandler(GetRetryPolicy());
+        })
+		.AddHttpMessageHandler<SubmissionsServiceAuthorisationHandler>()
+        .AddPolicyHandler(GetRetryPolicy());
 
         services.AddHttpClient<IPrnService, PrnService>((sp, c) =>
         {
-            var config = sp.GetRequiredService<IOptions<CommonBackendApiConfig>>().Value;
+            var config = sp.GetRequiredService<IOptions<PrnServiceApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        }).AddPolicyHandler(GetRetryPolicy());
+        })
+        .AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
+		.AddPolicyHandler(GetRetryPolicy());
 
         return services;
     }

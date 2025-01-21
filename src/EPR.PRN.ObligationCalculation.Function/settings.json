@@ -3,18 +3,20 @@
     "Values": {
         "AzureWebJobsStorage": "UseDevelopmentStorage=true",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-        "CommonDataApi__BaseUrl": "UseDevelopmentStorage=true",
-        "CommonDataApi__SubmissionsEndPoint": "UseDevelopmentStorage=true",
-        "CommonDataApi__LogPrefix": "[EPR.PRN.ObligationCalculation]",
-        "CommonBackendApi__LogPrefix": "[EPR.PRN.ObligationCalculation]",
-        "CommonBackendApi__BaseUrl": "UseDevelopmentStorage=true",
-        "CommonBackendApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
+        "SubmissionsServiceApi__BaseUrl": "UseDevelopmentStorage=true",
+        "SubmissionsServiceApi__SubmissionsEndPoint": "UseDevelopmentStorage=true",
+        "SubmissionsServiceApi__LogPrefix": "[EPR.PRN.ObligationCalculation]",
+        "SubmissionsServiceApi__ClientId": "UseDevelopmentStorage=true",
+        "PrnServiceApi__LogPrefix": "[EPR.PRN.ObligationCalculation]",
+        "PrnServiceApi__BaseUrl": "UseDevelopmentStorage=true",
+        "PrnServiceApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
+        "PrnServiceApi__ClientId": "UseDevelopmentStorage=true",
         "ServiceBus__FullyQualifiedNamespace": "UseDevelopmentStorage=true",
         "ServiceBus__ObligationQueueName": "UseDevelopmentStorage=true",
         "ServiceBus__ObligationLastSuccessfulRunQueueName": "UseDevelopmentStorage=true",
         "ServiceBus__LogPrefix": "[EPR.PRN.ObligationCalculation]",
         "ApplicationConfig__LogPrefix": "[EPR.PRN.ObligationCalculation]",
         "ApplicationConfig__DefaultRunDate": "UseDevelopmentStorage=true",
-        "StoreApprovedSubmissions__Schedule": "0 0 1 * * MON-FRI"
+        "StoreApprovedSubmissions__Schedule": "0 0 10 * * MON-FRI"
     }
 }
