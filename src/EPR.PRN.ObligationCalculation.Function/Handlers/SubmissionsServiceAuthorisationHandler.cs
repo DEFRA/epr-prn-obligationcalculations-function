@@ -1,9 +1,9 @@
-﻿using Azure.Core;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net.Http.Headers;
+using Azure.Core;
 using Azure.Identity;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using Microsoft.Extensions.Options;
-using System.Diagnostics.CodeAnalysis;
-using System.Net.Http.Headers;
 using Microsoft.Identity.Web;
 
 namespace EPR.PRN.ObligationCalculation.Function.Handlers;
@@ -14,27 +14,25 @@ public class SubmissionsServiceAuthorisationHandler : DelegatingHandler
 	private readonly TokenRequestContext _tokenRequestContext;
 	private readonly DefaultAzureCredential? _credentials;
 
-	public SubmissionsServiceAuthorisationHandler(IOptions<SubmissionsServiceApiConfig> options)
+	public SubmissionsServiceAuthorisationHandler(IOptions<SubmissionsServiceApiConfig> config)
 	{
-		if (!string.IsNullOrEmpty(options.Value.ClientId))
+		if (string.IsNullOrEmpty(config.Value.ClientId))
 		{
-			_tokenRequestContext = new TokenRequestContext([options.Value.ClientId]);
-			_credentials = new DefaultAzureCredential();
+			return;
 		}
+
+		_tokenRequestContext = new TokenRequestContext([config.Value.ClientId]);
+		_credentials = new DefaultAzureCredential();
 	}
 
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-	{
-		await AddDefaultToken(request, cancellationToken);
-		return await base.SendAsync(request, cancellationToken);
-	}
-
-	private async Task AddDefaultToken(HttpRequestMessage request, CancellationToken cancellationToken)
 	{
 		if (_credentials != null)
 		{
 			var tokenResult = await _credentials.GetTokenAsync(_tokenRequestContext, cancellationToken);
 			request.Headers.Authorization = new AuthenticationHeaderValue(Constants.Bearer, tokenResult.Token);
 		}
+
+		return await base.SendAsync(request, cancellationToken);
 	}
 }
