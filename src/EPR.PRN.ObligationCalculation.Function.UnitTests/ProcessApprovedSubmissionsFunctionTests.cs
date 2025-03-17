@@ -24,7 +24,8 @@ public class ProcessApprovedSubmissionsFunctionTests
         _configMock = new Mock<IOptions<ApplicationConfig>>();
         var config = new ApplicationConfig
         {
-            DefaultRunDate = "2024-01-01"
+            DefaultRunDate = "2024-01-01",
+            FunctionIsEnabled = true
         };
 
         _configMock.Setup(c => c.Value).Returns(config);
