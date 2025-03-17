@@ -33,6 +33,57 @@ public class ProcessApprovedSubmissionsFunctionTests
     }
 
     [TestMethod]
+    public async Task RunAsync_FunctionIsEnabled_ShouldProcessMessageSuccessfully()
+    {
+        var config = new ApplicationConfig
+        {
+            FunctionIsEnabled = true
+        };
+
+        _configMock.Setup(x => x.Value).Returns(config);
+
+        // Arrange
+        var serviceBusMessage = ServiceBusModelBuilder.CreateServiceBusReceivedMessage("test-message-body");
+
+        // Act
+        await _function.RunAsync(serviceBusMessage);
+
+        // Assert
+        _prnServiceMock.Verify(service => service.ProcessApprovedSubmission("test-message-body"), Times.Once);
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
+    }
+
+    [TestMethod]
+    public async Task RunAsync_FunctionIsDisabled_ShouldLog()
+    {
+        var config = new ApplicationConfig
+        {
+            FunctionIsEnabled = false
+        };
+
+        _configMock.Setup(x => x.Value).Returns(config);
+
+        // Arrange
+        var serviceBusMessage = ServiceBusModelBuilder.CreateServiceBusReceivedMessage("test-message-body");
+
+        // Act
+        await _function.RunAsync(serviceBusMessage);
+
+        // Assert
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(1));
+    }
+
+    [TestMethod]
     public async Task RunAsync_ShouldProcessMessageSuccessfully()
     {
         // Arrange
