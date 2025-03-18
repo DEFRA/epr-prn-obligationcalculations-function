@@ -10,7 +10,7 @@ namespace EPR.PRN.ObligationCalculation.Function;
 public class ProcessApprovedSubmissionsFunction(ILogger<ProcessApprovedSubmissionsFunction> logger, IPrnService prnService, IOptions<ApplicationConfig> config)
 {
     [Function("ProcessApprovedSubmissionsFunction")]
-    public async Task RunAsync([ServiceBusTrigger("%ServiceBus:ObligationQueueName%", Connection = "ServiceBus:ConnectionString")] ServiceBusReceivedMessage message)
+    public async Task RunAsync([ServiceBusTrigger("%ServiceBus:ObligationQueueName%", Connection = "ServiceBus")] ServiceBusReceivedMessage message)
     {
         if (!config.Value.FunctionIsEnabled)
         {
