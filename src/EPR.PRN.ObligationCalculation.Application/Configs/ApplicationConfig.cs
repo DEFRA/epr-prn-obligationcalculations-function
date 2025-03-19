@@ -9,4 +9,5 @@ public class ApplicationConfig
     public bool DeveloperMode { get; set; }
     public string DefaultRunDate { get; set; } = null!;
     public string LogPrefix { get; set; } = string.Empty;
+    public bool FunctionIsEnabled { get; set; }
 }

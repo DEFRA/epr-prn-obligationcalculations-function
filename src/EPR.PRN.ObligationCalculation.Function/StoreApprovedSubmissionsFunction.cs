@@ -12,15 +12,21 @@ public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFu
     [Function("StoreApprovedSubmissionsFunction")]
     public async Task RunAsync([TimerTrigger("%StoreApprovedSubmissions:Schedule%")] TimerInfo myTimer)
     {
+        logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: New session started", config.Value.LogPrefix);
+
+        if (!config.Value.FunctionIsEnabled)
+        {
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Exiting function as FunctionIsEnabled is set to {config.Value.FunctionIsEnabled}", config.Value.LogPrefix, config.Value.FunctionIsEnabled);
+            return;
+        }
+
         try
         {
-            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: New session started", config.Value.LogPrefix);
-
             var lastSuccessfulRunDateFromQueue = await serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
             logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Last run date {Date} retrieved from queue", config.Value.LogPrefix, lastSuccessfulRunDateFromQueue);
 
             var lastSuccessfulRunDate = string.IsNullOrEmpty(lastSuccessfulRunDateFromQueue) ? config.Value.DefaultRunDate : lastSuccessfulRunDateFromQueue;
-            
+
             if (string.IsNullOrEmpty(lastSuccessfulRunDate))
             {
                 logger.LogError("{LogPrefix}: StoreApprovedSubmissionsFunction: Last succesful run date is empty and function is terminated", config.Value.LogPrefix);
