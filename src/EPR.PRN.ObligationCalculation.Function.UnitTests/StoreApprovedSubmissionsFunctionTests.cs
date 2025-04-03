@@ -28,10 +28,42 @@ public class StoreApprovedSubmissionsFunctionTests
         _configMock = new Mock<IOptions<ApplicationConfig>>();
         var config = new ApplicationConfig
         {
-            DefaultRunDate = "2024-01-01"
+            DefaultRunDate = "2024-01-01",
+            FunctionIsEnabled = true
         };
 
         _configMock.Setup(c => c.Value).Returns(config);
+    }
+
+    [TestMethod]
+    public async Task RunAsync_FunctionIsDisabled_ShouldLog()
+    {
+        var config = new ApplicationConfig
+        {
+            FunctionIsEnabled = false
+        };
+
+        _configMock.Setup(x => x.Value).Returns(config);
+
+        // Arrange
+        _function = new StoreApprovedSubmissionsFunction(
+            _loggerMock.Object,
+            _submissionsDataService.Object,
+            _serviceBusProviderMock.Object,
+            _configMock.Object);
+
+        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync("2024-10-10");
+
+        // Act
+        await _function.RunAsync(_timerInfo);
+
+        // Assert
+        _loggerMock.Verify(l => l.Log(
+            LogLevel.Information,
+            It.IsAny<EventId>(),
+            It.IsAny<It.IsAnyType>(),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
     }
 
     [TestMethod]
@@ -48,7 +80,7 @@ public class StoreApprovedSubmissionsFunctionTests
             _configMock.Object);
 
         _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDateFromQueue);
- 
+
         // Act
         await _function.RunAsync(_timerInfo);
 
