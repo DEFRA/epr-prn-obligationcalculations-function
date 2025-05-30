@@ -22,8 +22,8 @@ public class PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOpti
                 var submissionEntities = JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(submissions);
                 if (submissionEntities != null)
                 {
-                    var organisationId = submissionEntities[0].OrganisationId;
-                    string prnCalculateEndPoint = string.Format(config.Value.PrnCalculateEndPoint, organisationId);
+                    var parentId = submissionEntities[0].ParentId;
+                    string prnCalculateEndPoint = string.Format(config.Value.PrnCalculateEndPoint, parentId);
                     logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request being sent to Endpoint : {Endpoint}, Submissions : {Submissions}", config.Value.LogPrefix, prnCalculateEndPoint, submissions);
 
                     var response = await httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissionEntities);

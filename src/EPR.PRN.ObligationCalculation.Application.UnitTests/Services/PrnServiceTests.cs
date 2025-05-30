@@ -68,7 +68,7 @@ public class PrnServiceTests
         // Arrange
         var submission = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
         {
-            new () { OrganisationId = Guid.NewGuid() }
+            new () { ParentId = Guid.NewGuid() }
         });
 
         _httpMessageHandlerMock
@@ -101,7 +101,7 @@ public class PrnServiceTests
         // Arrange
         var submission = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
         {
-            new() { OrganisationId = Guid.NewGuid() }
+            new() { ParentId = Guid.NewGuid() }
         });
 
         _httpMessageHandlerMock
@@ -134,7 +134,7 @@ public class PrnServiceTests
         // Arrange
         var submission = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
         {
-            new() { OrganisationId = Guid.NewGuid() }
+            new() { ParentId = Guid.NewGuid() }
         });
 
         _httpMessageHandlerMock.Protected()

@@ -19,20 +19,20 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
                 logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - No new submissions received from pom endpoint to queue", config.Value.LogPrefix);
                 return;
             }
-            var organisationIds = approvedSubmissionEntities
-                                    .Select(r => r.OrganisationId)
+            var parentIds = approvedSubmissionEntities
+                                    .Select(r => r.ParentId)
                                     .Distinct()
                                     .ToList();
 
             await using var sender = serviceBusClient.CreateSender(config.Value.ObligationQueueName);
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
-            foreach (var organisationId in organisationIds)
+            foreach (var parentId in parentIds)
             {
-                var submissions = approvedSubmissionEntities.Where(s => s.OrganisationId == organisationId).ToList();
+                var submissions = approvedSubmissionEntities.Where(s => s.ParentId == parentId).ToList();
                 var jsonSumissions = JsonSerializer.Serialize(submissions, jsonOptions);
                 if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonSumissions)))
                 {
-                    logger.LogWarning("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - The message {OrganisationId} is too large to fit in the batch.", config.Value.LogPrefix, organisationId);
+                    logger.LogWarning("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - The message {ParentId} is too large to fit in the batch.", config.Value.LogPrefix, parentId);
                 }
             }
 

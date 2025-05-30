@@ -14,7 +14,7 @@ public class ProcessApprovedSubmissionsFunction(ILogger<ProcessApprovedSubmissio
     {
         if (!config.Value.FunctionIsEnabled)
         {
-            logger.LogInformation("{LogPrefix}: ProcessApprovedSubmissionsFunction: Exiting function as FunctionIsEnabled is set to {config.Value.FunctionIsEnabled}", config.Value.LogPrefix, config.Value.FunctionIsEnabled);
+            logger.LogInformation("{LogPrefix}: ProcessApprovedSubmissionsFunction: Exiting function as FunctionIsEnabled is set to {FunctionIsEnabled}", config.Value.LogPrefix, config.Value.FunctionIsEnabled);
             return;
         }
 
