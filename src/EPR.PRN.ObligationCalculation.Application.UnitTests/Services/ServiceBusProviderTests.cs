@@ -312,4 +312,28 @@ public class ServiceBusProviderTests
 
         _serviceBusSenderMock.Verify(sender => sender.DisposeAsync(), Times.Once);
     }
+
+	[TestMethod]
+	public async Task SendApprovedSubmissionsToQueueAsync_ShouldThrowError_WhenClientFails()
+	{
+		// Arrange
+		var approvedSubmissions = fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
+
+		_serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
+		_serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ThrowsAsync(new Exception("error"));
+
+		// Act & Assert
+		await Assert.ThrowsExceptionAsync<Exception>(async () =>
+		{
+			await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
+		});
+
+		_serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
+		_loggerMock.Verify(l => l.Log(
+			LogLevel.Error,
+			It.IsAny<EventId>(),
+			It.IsAny<It.IsAnyType>(),
+			It.IsAny<Exception>(),
+			It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+	}
 }
