@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
+using Newtonsoft.Json;
 using System.Net;
 
 namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
@@ -56,9 +57,11 @@ public class SubmissionsDataServiceTests
             .ReturnsAsync(new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(
-                    "[{ \"ParentId\": \"" + parentId + "\" }]")
-            });
+                Content = new StringContent(JsonConvert.SerializeObject(new[]
+                            {
+	                            new { ParentId = parentId }
+                            }))
+			});
 
         // Act
         var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
@@ -103,7 +106,9 @@ public class SubmissionsDataServiceTests
     public async Task GetSubmissions_ShouldThrowException_WhenHttpClientThrowsException()
     {
         // Arrange
-        _httpMessageHandlerMock.Protected()
+        var expectedErrorMessagePart = "SubmissionsDataService - GetApprovedSubmissionsData - Error while getting submissions data from";
+
+		_httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
@@ -118,8 +123,8 @@ public class SubmissionsDataServiceTests
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
+			It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedErrorMessagePart)),
+			It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }

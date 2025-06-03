@@ -108,8 +108,9 @@ public class ProcessApprovedSubmissionsFunctionTests
     {
         // Arrange
         var serviceBusMessage = ServiceBusModelBuilder.CreateServiceBusReceivedMessage("test-message-body");
+        var expectedErrorMessagePart = "ProcessApprovedSubmissionsFunction: Exception occurred while processing message";
 
-        _prnServiceMock.Setup(service => service.ProcessApprovedSubmission(It.IsAny<string>()))
+		_prnServiceMock.Setup(service => service.ProcessApprovedSubmission(It.IsAny<string>()))
                        .ThrowsAsync(new Exception("Test exception"));
 
         // Act & Assert
@@ -118,8 +119,8 @@ public class ProcessApprovedSubmissionsFunctionTests
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
+			It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedErrorMessagePart)),
+			It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }

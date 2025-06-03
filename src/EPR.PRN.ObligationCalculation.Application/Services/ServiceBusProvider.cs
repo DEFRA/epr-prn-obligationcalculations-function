@@ -88,11 +88,11 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
             await using var sender = serviceBusClient.CreateSender(config.Value.ObligationLastSuccessfulRunQueueName);
             var message = new ServiceBusMessage(runDate);
             await sender.SendMessageAsync(message);
-            logger.LogInformation("{LogPrefix}: Updated currect successful run date ({RunDate})to queue", config.Value.LogPrefix, runDate);
+            logger.LogInformation("{LogPrefix}: SendSuccessfulRunDateToQueue: Updated currect successful run date ({RunDate})to queue", config.Value.LogPrefix, runDate);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "{LogPrefix}: Error whild sending runDate message: {Message}", config.Value.LogPrefix, ex.Message);
+            logger.LogError(ex, "{LogPrefix}: SendSuccessfulRunDateToQueue: Error whild sending runDate message: {Message}", config.Value.LogPrefix, ex.Message);
             throw;
         }
     }

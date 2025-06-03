@@ -7,7 +7,7 @@ using Moq;
 
 namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
 
-[TestClass()]
+[TestClass]
 public class StoreApprovedSubmissionsFunctionTests
 {
     private Mock<ISubmissionsDataService> _submissionsDataService = null!;
@@ -124,7 +124,9 @@ public class StoreApprovedSubmissionsFunctionTests
     public async Task RunAsync_ShouldHandleException_WhenErrorOccurs()
     {
         // Arrange
-        _function = new StoreApprovedSubmissionsFunction(
+        var expectedErrorMessagePart = "StoreApprovedSubmissionsFunction: Ended with error while storing approved submission";
+
+		_function = new StoreApprovedSubmissionsFunction(
             _loggerMock.Object,
             _submissionsDataService.Object,
             _serviceBusProviderMock.Object,
@@ -144,8 +146,8 @@ public class StoreApprovedSubmissionsFunctionTests
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
+			It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedErrorMessagePart)),
+			It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }
