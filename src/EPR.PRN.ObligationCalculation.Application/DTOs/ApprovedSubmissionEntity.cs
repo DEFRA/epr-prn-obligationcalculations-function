@@ -13,8 +13,8 @@ public class ApprovedSubmissionEntity
 
     public int PackagingMaterialWeight { get; set; }
 
-    public Guid ParentId { get; set; }
+    public Guid PrincipleId { get; set; }
 
-    public string ParentType { get; set; } = string.Empty;
+    public string PrincipleType { get; set; } = string.Empty;
 
 }
