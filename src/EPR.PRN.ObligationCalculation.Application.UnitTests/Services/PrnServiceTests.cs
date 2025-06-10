@@ -46,7 +46,7 @@ public class PrnServiceTests
 
 		_submissionJson = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
 		{
-			new () { PrincipleId = Guid.NewGuid() }
+			new () { SubmitterId = Guid.NewGuid() }
 		});
 	}
 

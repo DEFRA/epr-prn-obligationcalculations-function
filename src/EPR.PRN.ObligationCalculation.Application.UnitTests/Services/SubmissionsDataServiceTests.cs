@@ -48,7 +48,7 @@ public class SubmissionsDataServiceTests
     {
         // Arrange
         var expectedLogMessage = $"Get Approved Submissions Data from {_lastSuccessfulRunDate}";
-        var principleId = Guid.NewGuid();
+        var submitterId = Guid.NewGuid();
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -59,7 +59,7 @@ public class SubmissionsDataServiceTests
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(JsonConvert.SerializeObject(new[]
                             {
-	                            new { PrincipleId = principleId }
+	                            new { SubmitterId = submitterId }
                             }))
 			});
 
@@ -69,7 +69,7 @@ public class SubmissionsDataServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Count.Should().Be(1);
-        result[0].PrincipleId.Should().Be(principleId);
+        result[0].SubmitterId.Should().Be(submitterId);
 
         _loggerMock.Verify(l => l.Log(
             LogLevel.Information,

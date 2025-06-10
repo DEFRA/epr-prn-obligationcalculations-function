@@ -83,7 +83,7 @@ public class ServiceBusProviderTests
     {
         // Arrange
         var approvedSubmissions = fixture.Build<ApprovedSubmissionEntity>()
-            .With(x => x.PrincipleId, Guid.NewGuid())
+            .With(x => x.SubmitterId, Guid.NewGuid())
             .CreateMany(10)
             .ToList();
 
