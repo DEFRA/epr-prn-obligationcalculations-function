@@ -19,8 +19,9 @@ public class PrnServiceTests
     private HttpClient _httpClient = null!;
     private PrnService _prnService = null!;
     private PrnServiceApiConfig _config = null!;
+    private string _submissionJson = string.Empty;
 
-    [TestInitialize]
+	[TestInitialize]
     public void Setup()
     {
         _loggerMock = new Mock<ILogger<PrnService>>();
@@ -42,7 +43,12 @@ public class PrnServiceTests
         };
 
         _prnService = new PrnService(_loggerMock.Object, _httpClient, _configMock.Object);
-    }
+
+		_submissionJson = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
+		{
+			new () { SubmitterId = Guid.NewGuid() }
+		});
+	}
 
     [TestMethod]
     public async Task ProcessApprovedSubmission_ShouldLogInformation_WhenSubmissionIsEmpty()
@@ -66,11 +72,6 @@ public class PrnServiceTests
     public async Task ProcessApprovedSubmission_ShouldSendPostRequest_WhenSubmissionIsNotEmpty()
     {
         // Arrange
-        var submission = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
-        {
-            new () { OrganisationId = Guid.NewGuid() }
-        });
-
         _httpMessageHandlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -83,7 +84,7 @@ public class PrnServiceTests
             });
 
         // Act
-        await _prnService.ProcessApprovedSubmission(submission);
+        await _prnService.ProcessApprovedSubmission(_submissionJson);
 
         // Assert
         _httpMessageHandlerMock
@@ -99,11 +100,6 @@ public class PrnServiceTests
     public async Task ProcessApprovedSubmission_ShouldThrowHttpRequestException_WhenUnsuccesfulResponse()
     {
         // Arrange
-        var submission = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
-        {
-            new() { OrganisationId = Guid.NewGuid() }
-        });
-
         _httpMessageHandlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -117,7 +113,7 @@ public class PrnServiceTests
 
         // Act & Assert
         _ = await Assert.ThrowsExceptionAsync<HttpRequestException>(() =>
-            _prnService.ProcessApprovedSubmission(submission));
+            _prnService.ProcessApprovedSubmission(_submissionJson));
         
         // Assert handled by ExpectedException
         _loggerMock.Verify(l => l.Log(
@@ -132,11 +128,6 @@ public class PrnServiceTests
     public async Task ProcessApprovedSubmission_ShouldThrowException_WhenHttpClientThrowsException()
     {
         // Arrange
-        var submission = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
-        {
-            new() { OrganisationId = Guid.NewGuid() }
-        });
-
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -146,7 +137,7 @@ public class PrnServiceTests
 
         // Act & Assert
         _ = await Assert.ThrowsExceptionAsync<Exception>(() =>
-            _prnService.ProcessApprovedSubmission(submission));
+            _prnService.ProcessApprovedSubmission(_submissionJson));
 
         // Assert handled by ExpectedException
         _loggerMock.Verify(l => l.Log(
