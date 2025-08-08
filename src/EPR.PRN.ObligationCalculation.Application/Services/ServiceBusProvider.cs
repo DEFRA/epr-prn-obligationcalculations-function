@@ -1,9 +1,9 @@
-﻿using Azure.Messaging.ServiceBus;
+﻿using System.Text.Json;
+using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
@@ -25,21 +25,17 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
                                     .ToList();
 
             await using var sender = serviceBusClient.CreateSender(config.Value.ObligationQueueName);
-            using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
+
             foreach (var submitterId in submitterIds)
             {
                 var submissions = approvedSubmissionEntities.Where(s => s.SubmitterId == submitterId).ToList();
                 var jsonSumissions = JsonSerializer.Serialize(submissions, jsonOptions);
-                if (!messageBatch.TryAddMessage(new ServiceBusMessage(jsonSumissions)))
-                {
-                    logger.LogWarning("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - The message {SubmitterId} is too large to fit in the batch.", config.Value.LogPrefix, submitterId);
-                }
+                await sender.SendMessageAsync(new ServiceBusMessage(jsonSumissions));
             }
 
-            await sender.SendMessagesAsync(messageBatch);
-            logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - A batch of {MessageBatchCount} messages has been published to the obligation queue.", config.Value.LogPrefix, messageBatch.Count);
+            logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Messages have been published to the obligation queue.", config.Value.LogPrefix);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             logger.LogError(ex, "{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Error sending messages to queue {Message}", config.Value.LogPrefix, ex.Message);
             throw;

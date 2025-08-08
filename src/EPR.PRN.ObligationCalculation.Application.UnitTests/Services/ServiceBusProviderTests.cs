@@ -39,7 +39,7 @@ public class ServiceBusProviderTests
         };
 
         _configMock.Setup(c => c.Value).Returns(config);
-        
+
         // Set up ServiceBusClient to return the mock receiver
         _serviceBusClientMock
             .Setup(client => client.CreateReceiver(It.IsAny<string>()))
@@ -56,9 +56,6 @@ public class ServiceBusProviderTests
     public async Task SendApprovedSubmissionsToQueueAsync_Success()
     {
         // Arrange
-        var messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(500, []);
-
-        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
 
         var approvedSubmissions = fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
@@ -67,47 +64,10 @@ public class ServiceBusProviderTests
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
         // Assert
-        _serviceBusSenderMock.Verify(sender => sender.CreateMessageBatchAsync(default), Times.Once);
-        _serviceBusSenderMock.Verify(sender => sender.SendMessagesAsync(It.IsAny<ServiceBusMessageBatch>(), default), Times.Once);
+        _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), default));
         _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
         _loggerMock.Verify(l => l.Log(
             LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-    }
-
-    [TestMethod]
-    public async Task SendApprovedSubmissionsToQueueAsync_MessageTooMany_Warns()
-    {
-        // Arrange
-        var approvedSubmissions = fixture.Build<ApprovedSubmissionEntity>()
-            .With(x => x.SubmitterId, Guid.NewGuid())
-            .CreateMany(10)
-            .ToList();
-
-        int messageCountThreshold = 1;
-
-        List<ServiceBusMessage> messageList = [];
-        messageList.Add(new ServiceBusMessage());
-
-        ServiceBusMessageBatch messageBatch = ServiceBusModelFactory.ServiceBusMessageBatch(
-            batchSizeBytes: 500,
-            batchMessageStore: messageList,
-            batchOptions: new CreateMessageBatchOptions(),
-            tryAddCallback: _ => messageList.Count < messageCountThreshold);
-
-        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ReturnsAsync(messageBatch);
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-        
-        // Act
-        await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
-
-        // Assert
-        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.Verify(l => l.Log(
-            LogLevel.Warning,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
@@ -124,35 +84,13 @@ public class ServiceBusProviderTests
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
 
         var approvedSubmissions = new List<ApprovedSubmissionEntity>();
-        
+
         // Act
         await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
         // Assert
         _loggerMock.Verify(l => l.Log(
             LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-    }
-
-    [TestMethod]
-    [ExpectedException(typeof(Exception))]
-    public async Task SendApprovedSubmissionsToQueueAsync_ShouldThrowError_WHenClientFails()
-    {
-        // Arrange
-        var approvedSubmissions = fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
-
-        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-        _serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ThrowsAsync(new Exception("error"));
-        // Act
-        await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
-
-        // Assert
-        _serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-        _loggerMock.Verify(l => l.Log(
-            LogLevel.Error,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
             It.IsAny<Exception>(),
@@ -170,7 +108,7 @@ public class ServiceBusProviderTests
         var message1 = ServiceBusModelBuilder.CreateServiceBusReceivedMessage(date1, 1);
         var message2 = ServiceBusModelBuilder.CreateServiceBusReceivedMessage(date2, 2);
         var latestMessage = ServiceBusModelBuilder.CreateServiceBusReceivedMessage(latestDate, 3);
-                
+
         _serviceBusReceiverMock
             .Setup(r => r.ReceiveMessagesAsync(
                 It.IsAny<int>(),
@@ -178,7 +116,7 @@ public class ServiceBusProviderTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([message1, message2, latestMessage]);
 
-        
+
         int completeMessageCalls = 0;
         _serviceBusReceiverMock
             .Setup(r => r.CompleteMessageAsync(
@@ -276,7 +214,7 @@ public class ServiceBusProviderTests
         _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(
             It.Is<ServiceBusMessage>(msg => msg.Body.ToString() == runDate),
             default), Times.Once);
-        
+
         _loggerMock.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
@@ -293,9 +231,9 @@ public class ServiceBusProviderTests
         // Arrange
         var runDate = "2024-10-10";
         var exception = new Exception("Test exception");
-		var expectedErrorMessagePart = "SendSuccessfulRunDateToQueue: Error whild sending runDate message";
+        var expectedErrorMessagePart = "SendSuccessfulRunDateToQueue: Error whild sending runDate message";
 
-		_serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>()))
+        _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>()))
                                  .Returns(_serviceBusSenderMock.Object);
 
         _serviceBusSenderMock.Setup(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), default))
@@ -307,35 +245,10 @@ public class ServiceBusProviderTests
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-			It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedErrorMessagePart)),
-			exception,
+            It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedErrorMessagePart)),
+            exception,
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
 
         _serviceBusSenderMock.Verify(sender => sender.DisposeAsync(), Times.Once);
     }
-
-	[TestMethod]
-	public async Task SendApprovedSubmissionsToQueueAsync_ShouldThrowError_WhenClientFails()
-	{
-		// Arrange
-		var expectedErrorMessagePart = "SendApprovedSubmissionsToQueueAsync - Error sending messages to queue";
-		var approvedSubmissions = fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
-
-		_serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
-		_serviceBusSenderMock.Setup(sender => sender.CreateMessageBatchAsync(default)).ThrowsAsync(new Exception("error"));
-
-		// Act & Assert
-		await Assert.ThrowsExceptionAsync<Exception>(async () =>
-		{
-			await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
-		});
-
-		_serviceBusSenderMock.Verify(r => r.DisposeAsync(), Times.Once);
-		_loggerMock.Verify(l => l.Log(
-			LogLevel.Error,
-			It.IsAny<EventId>(),
-			It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedErrorMessagePart)),
-			It.IsAny<Exception>(),
-			It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
-	}
 }
