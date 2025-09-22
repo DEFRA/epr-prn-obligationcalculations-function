@@ -59,9 +59,9 @@ public class ServiceBusProviderTests
         _serviceBusClientMock.Setup(client => client.CreateSender(It.IsAny<string>())).Returns(_serviceBusSenderMock.Object);
 
         var approvedSubmissions = fixture.CreateMany<ApprovedSubmissionEntity>(3).ToList();
-
-        // Act
-        await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
+        var expectedLogMessage = "Messages have been published to the obligation queue.";
+		// Act
+		await _serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissions);
 
         // Assert
         _serviceBusSenderMock.Verify(sender => sender.SendMessageAsync(It.IsAny<ServiceBusMessage>(), default));
@@ -69,8 +69,8 @@ public class ServiceBusProviderTests
         _loggerMock.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
+			It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedLogMessage)),
+			It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
