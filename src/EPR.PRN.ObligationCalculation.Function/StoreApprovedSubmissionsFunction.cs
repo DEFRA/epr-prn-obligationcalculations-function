@@ -39,9 +39,9 @@ public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFu
             logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Sending Approved submission entities to queue...", config.Value.LogPrefix);
             await serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities);
 
-            var currectRunDate = DateTime.Now.Date.ToString("yyyy-MM-dd");
-            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Adding Successful RunDate To Queue {CurrectRunDate} ...", config.Value.LogPrefix, currectRunDate.ToString());
-            await serviceBusProvider.SendSuccessfulRunDateToQueue(currectRunDate);
+            //var currectRunDate = DateTime.Now.Date.ToString("yyyy-MM-dd");
+            //logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Adding Successful RunDate To Queue {CurrectRunDate} ...", config.Value.LogPrefix, currectRunDate.ToString());
+            //await serviceBusProvider.SendSuccessfulRunDateToQueue(currectRunDate);
 
             logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Completed storing submissions", config.Value.LogPrefix);
         }

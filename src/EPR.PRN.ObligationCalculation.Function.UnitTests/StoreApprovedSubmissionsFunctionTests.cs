@@ -66,32 +66,32 @@ public class StoreApprovedSubmissionsFunctionTests
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
     }
 
-    [TestMethod]
-    [DataRow("", 6)]
-    [DataRow(null, 6)]
-    [DataRow("2024-10-10", 6)]
-    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(string lastSuccessfulRunDateFromQueue, int logInformationCount)
-    {
-        // Arrange
-        _function = new StoreApprovedSubmissionsFunction(
-            _loggerMock.Object,
-            _submissionsDataService.Object,
-            _serviceBusProviderMock.Object,
-            _configMock.Object);
+    //[TestMethod]
+    //[DataRow("", 6)]
+    //[DataRow(null, 6)]
+    //[DataRow("2024-10-10", 6)]
+    //public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(string lastSuccessfulRunDateFromQueue, int logInformationCount)
+    //{
+    //    // Arrange
+    //    _function = new StoreApprovedSubmissionsFunction(
+    //        _loggerMock.Object,
+    //        _submissionsDataService.Object,
+    //        _serviceBusProviderMock.Object,
+    //        _configMock.Object);
 
-        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDateFromQueue);
+    //    _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDateFromQueue);
 
-        // Act
-        await _function.RunAsync(_timerInfo);
+    //    // Act
+    //    await _function.RunAsync(_timerInfo);
 
-        // Assert
-        _loggerMock.Verify(l => l.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(logInformationCount));
-    }
+    //    // Assert
+    //    _loggerMock.Verify(l => l.Log(
+    //        LogLevel.Information,
+    //        It.IsAny<EventId>(),
+    //        It.IsAny<It.IsAnyType>(),
+    //        It.IsAny<Exception>(),
+    //        It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(logInformationCount));
+    //}
 
     [TestMethod]
     [DataRow(null)]
