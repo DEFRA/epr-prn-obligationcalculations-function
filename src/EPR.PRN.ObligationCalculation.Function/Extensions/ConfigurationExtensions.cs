@@ -3,9 +3,11 @@ using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.Handlers;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Extensions.Http;
@@ -27,7 +29,45 @@ public static class ConfigurationExtensions
         return services;
     }
 
-    public static IServiceCollection AddAzureClients(this IServiceCollection services)
+    public static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
+    {
+        // Add AI worker service with custom options
+        services.AddApplicationInsightsTelemetryWorkerService(options =>
+        {
+            options.ConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
+            options.EnableAdaptiveSampling = false; // keep all telemetry
+        });
+
+        // Configure Functions-specific AI settings
+        services.ConfigureFunctionsApplicationInsights();
+
+        // Customize logging rules for Application Insights
+        services.Configure<LoggerFilterOptions>(options =>
+        {
+            const string aiProvider = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
+
+            // Remove existing default rule for AI provider, if any
+            var defaultRule = options.Rules.FirstOrDefault(r => r.ProviderName == aiProvider);
+            if (defaultRule != null)
+            {
+                options.Rules.Remove(defaultRule);
+            }
+
+            // Add a new rule to log Information level and above for all categories
+            options.Rules.Add(
+                new LoggerFilterRule(
+                    providerName: aiProvider,
+                    categoryName: null,
+                    logLevel: LogLevel.Information,
+                    filter: null
+                )
+            );
+        });
+
+        return services;
+    }
+
+	public static IServiceCollection AddAzureClients(this IServiceCollection services)
     {
         services.AddAzureClients(clientBuilder =>
             {
