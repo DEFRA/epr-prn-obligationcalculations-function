@@ -34,7 +34,7 @@ public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFu
             }
 
             var approvedSubmissionEntities = await submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
-            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Approved submission entities retrieved from backnend {ApprovedSubmissionEntities}", config.Value.LogPrefix, JsonConvert.SerializeObject(approvedSubmissionEntities));
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Approved submission entities retrieved from backnend", config.Value.LogPrefix);
 
             logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Sending Approved submission entities to queue...", config.Value.LogPrefix);
             await serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities);

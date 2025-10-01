@@ -24,14 +24,13 @@ public class PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOpti
                 {
                     var submitterId = submissionEntities[0].SubmitterId;
                     string prnCalculateEndPoint = string.Format(config.Value.PrnCalculateEndPoint, submitterId);
-                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request being sent to Endpoint : {Endpoint}, Submissions : {Submissions}", config.Value.LogPrefix, prnCalculateEndPoint, submissions);
+                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request being sent to Endpoint: {Endpoint}, SubmitterId: {SubmitterId}, Entity Count: {Count} ", config.Value.LogPrefix, prnCalculateEndPoint, submitterId, submissionEntities.Count);
 
                     var response = await httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissionEntities);
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions response received : {Response}", config.Value.LogPrefix, responseContent);
+                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Calculate endpoint execution completed with status code - {StatusCode}", config.Value.LogPrefix, response.StatusCode);
                     
                     response.EnsureSuccessStatusCode();
-                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions message is posted to backend", config.Value.LogPrefix);
+                    logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions message is posted to backend successfully", config.Value.LogPrefix);
                 }
             }
         }
