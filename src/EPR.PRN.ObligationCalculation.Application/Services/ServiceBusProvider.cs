@@ -31,7 +31,7 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
                 var submissions = approvedSubmissionEntities.Where(s => s.SubmitterId == submitterId).ToList();
                 var jsonSumissions = JsonSerializer.Serialize(submissions, jsonOptions);
 				
-                logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} and Message - {JsonSubmissions}", config.Value.LogPrefix, submitterId, jsonSumissions);
+                logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} with entity count {SubmissonsCount}", config.Value.LogPrefix, submitterId, submissions.Count);
 
 				await sender.SendMessageAsync(new ServiceBusMessage(jsonSumissions));
             }
