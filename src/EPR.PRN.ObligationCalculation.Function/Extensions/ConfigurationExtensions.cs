@@ -31,11 +31,10 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
     {
-        // Add AI worker service with custom options
-        services.AddApplicationInsightsTelemetryWorkerService(options =>
+		// Add AI worker service with custom options
+		services.AddApplicationInsightsTelemetryWorkerService(options =>
         {
             options.ConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
-            options.EnableAdaptiveSampling = false; // keep all telemetry
         });
 
         // Configure Functions-specific AI settings
@@ -90,7 +89,7 @@ public static class ConfigurationExtensions
             var config = sp.GetRequiredService<IOptions<SubmissionsServiceApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-			c.Timeout = TimeSpan.FromSeconds(360);
+			c.Timeout = TimeSpan.FromSeconds(config.TimeoutFromSeconds);
 		})
 		.AddHttpMessageHandler<SubmissionsServiceAuthorisationHandler>()
         .AddPolicyHandler(GetRetryPolicy());
@@ -100,7 +99,7 @@ public static class ConfigurationExtensions
             var config = sp.GetRequiredService<IOptions<PrnServiceApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-			c.Timeout = TimeSpan.FromSeconds(360);
+			c.Timeout = TimeSpan.FromSeconds(config.TimeoutFromSeconds);
 		})
         .AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
 		.AddPolicyHandler(GetRetryPolicy());
