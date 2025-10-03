@@ -9,7 +9,7 @@
     "PrnServiceApi__BaseUrl": "UseDevelopmentStorage=true",
     "PrnServiceApi__ClientId": "UseDevelopmentStorage=true",
     "PrnServiceApi__LogPrefix": "[EPR.PRN.ObligationCalculation]",
-    "PrnServiceApi__TimeoutFromSeconds": "UseDevelopmentStorage=true",
+    "PrnServiceApi__TimeoutFromSeconds": 360,
     "PrnServiceApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
     "ServiceBus__FullyQualifiedNamespace": "UseDevelopmentStorage=true",
     "ServiceBus__LogPrefix": "[EPR.PRN.ObligationCalculation]",
@@ -18,7 +18,7 @@
     "SubmissionsServiceApi__BaseUrl": "UseDevelopmentStorage=true",
     "SubmissionsServiceApi__ClientId": "UseDevelopmentStorage=true",
     "SubmissionsServiceApi__LogPrefix": "[EPR.PRN.ObligationCalculation]",
-    "SubmissionsServiceApi__TimeoutFromSeconds": "UseDevelopmentStorage=true",
+    "SubmissionsServiceApi__TimeoutFromSeconds": 360,
     "StoreApprovedSubmissions__Schedule": "0 0 10 * * MON-FRI",
     "SubmissionsServiceApi__SubmissionsEndPoint": "UseDevelopmentStorage=true"
   }
