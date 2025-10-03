@@ -31,15 +31,11 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
     {
-		var sp = services.BuildServiceProvider();
-		var applicationConfig = sp.GetRequiredService<IOptions<ApplicationConfig>>().Value;
-
 		// Add AI worker service with custom options
 		services.AddApplicationInsightsTelemetryWorkerService(options =>
         {
             options.ConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
-            options.EnableAdaptiveSampling = applicationConfig.ApplicationInsightsEnableSampling;
-		});
+        });
 
         // Configure Functions-specific AI settings
         services.ConfigureFunctionsApplicationInsights();

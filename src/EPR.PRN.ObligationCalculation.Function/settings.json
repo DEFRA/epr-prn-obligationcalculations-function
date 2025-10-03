@@ -4,7 +4,6 @@
     "ApplicationConfig__DefaultRunDate": "UseDevelopmentStorage=true",
     "ApplicationConfig__LogPrefix": "[EPR.PRN.ObligationCalculation]",
     "ApplicationConfig__FunctionIsEnabled": false,
-    "ApplicationConfig__ApplicationInsightsEnableSampling": true,
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "PrnServiceApi__BaseUrl": "UseDevelopmentStorage=true",
