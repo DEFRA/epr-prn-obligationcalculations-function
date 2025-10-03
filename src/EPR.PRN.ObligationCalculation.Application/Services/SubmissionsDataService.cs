@@ -21,7 +21,7 @@ public class SubmissionsDataService(ILogger<SubmissionsDataService> logger, Http
             var response = await httpClient.GetAsync(endpoint);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
-            logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Received approved submissions from data API {Result}", config.Value.LogPrefix, JsonConvert.SerializeObject(result));
+            logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Received approved submissions data from: {Endpoint}", config.Value.LogPrefix, endpoint);
             var submissionEntities = JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(result);
             return submissionEntities ?? [];
         }
