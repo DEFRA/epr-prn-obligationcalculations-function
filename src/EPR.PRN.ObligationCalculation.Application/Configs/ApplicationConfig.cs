@@ -10,4 +10,5 @@ public class ApplicationConfig
     public string DefaultRunDate { get; set; } = null!;
     public string LogPrefix { get; set; } = string.Empty;
     public bool FunctionIsEnabled { get; set; }
+    public bool ApplicationInsightsEnableSampling { get; set; }
 }
