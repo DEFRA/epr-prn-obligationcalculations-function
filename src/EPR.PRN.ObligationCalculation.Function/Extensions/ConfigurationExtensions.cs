@@ -50,7 +50,7 @@ public static class ConfigurationExtensions
             var config = sp.GetRequiredService<IOptions<SubmissionsServiceApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            c.Timeout = TimeSpan.FromSeconds(360);
+			c.Timeout = TimeSpan.FromSeconds(360);
 		})
 		.AddHttpMessageHandler<SubmissionsServiceAuthorisationHandler>()
         .AddPolicyHandler(GetRetryPolicy());
