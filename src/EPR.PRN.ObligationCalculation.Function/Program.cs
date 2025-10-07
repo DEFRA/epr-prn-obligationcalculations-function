@@ -1,7 +1,6 @@
 using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.Extensions;
 using EPR.PRN.ObligationCalculation.Function.Handlers;
-using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,9 +17,8 @@ namespace EPR.PRN.ObligationCalculation.Function
         .ConfigureFunctionsWebApplication()
         .ConfigureServices((hostingContext, services) =>
         {
-            services.AddApplicationInsightsTelemetryWorkerService();
-            services.ConfigureFunctionsApplicationInsights();
-            services.AddHttpClient();
+			services.AddCustomApplicationInsights();
+			services.AddHttpClient();
             services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
             services.AddScoped<IPrnService, PrnService>();
             services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
