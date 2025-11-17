@@ -1,9 +1,9 @@
-﻿using System.Text.Json;
-using Azure.Messaging.ServiceBus;
+﻿using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace EPR.PRN.ObligationCalculation.Application.Services;
 
@@ -30,8 +30,11 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
             {
                 var submissions = approvedSubmissionEntities.Where(s => s.SubmitterId == submitterId).ToList();
                 var jsonSumissions = JsonSerializer.Serialize(submissions, jsonOptions);
-				
-                logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} with entity count {SubmissonsCount}", config.Value.LogPrefix, submitterId, submissions.Count);
+				if (submitterId == Guid.Parse("60F59BD5-59CA-4603-8DA2-FEB4C8B0CCE6"))
+				{
+					logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} with submissions {SubmissonsCount}", config.Value.LogPrefix, submitterId, jsonSumissions);
+				}
+				logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} with entity count {SubmissonsCount}", config.Value.LogPrefix, submitterId, submissions.Count);
 
 				await sender.SendMessageAsync(new ServiceBusMessage(jsonSumissions));
             }

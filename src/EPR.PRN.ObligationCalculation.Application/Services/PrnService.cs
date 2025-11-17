@@ -23,7 +23,11 @@ public class PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOpti
                 if (submissionEntities != null)
                 {
                     var submitterId = submissionEntities[0].SubmitterId;
-                    string prnCalculateEndPoint = string.Format(config.Value.PrnCalculateEndPoint, submitterId);
+					if (submitterId == Guid.Parse("60F59BD5-59CA-4603-8DA2-FEB4C8B0CCE6"))
+					{
+						logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request for SubmitterId: {SubmitterId} with submissions entities: {SubmissionEntities} ", config.Value.LogPrefix, submitterId, submissionEntities);
+					}
+					string prnCalculateEndPoint = string.Format(config.Value.PrnCalculateEndPoint, submitterId);
                     logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request being sent to Endpoint: {Endpoint}, SubmitterId: {SubmitterId}, Entity Count: {Count} ", config.Value.LogPrefix, prnCalculateEndPoint, submitterId, submissionEntities.Count);
 
                     var response = await httpClient.PostAsJsonAsync(prnCalculateEndPoint, submissionEntities);
