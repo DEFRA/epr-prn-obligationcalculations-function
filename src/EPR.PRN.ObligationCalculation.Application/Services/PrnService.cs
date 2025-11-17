@@ -23,7 +23,7 @@ public class PrnService(ILogger<PrnService> logger, HttpClient httpClient, IOpti
                 if (submissionEntities != null)
                 {
                     var submitterId = submissionEntities[0].SubmitterId;
-					if (submitterId == Guid.Parse("9B2647DB-210A-4BCB-86A1-E68E210A8F42"))
+					if (submitterId == Guid.Parse("60F59BD5-59CA-4603-8DA2-FEB4C8B0CCE6"))
 					{
 						logger.LogInformation("{LogPrefix}: PrnService - ProcessApprovedSubmission - Submissions request for SubmitterId: {SubmitterId} with submissions entities: {SubmissionEntities} ", config.Value.LogPrefix, submitterId, submissionEntities);
 					}
