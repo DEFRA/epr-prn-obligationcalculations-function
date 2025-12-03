@@ -10,5 +10,4 @@ public class SubmissionsServiceApiConfig
     public string SubmissionsEndPoint { get; set; } = null!;
     public string LogPrefix { get; set; } = string.Empty;
 	public string ClientId { get; set; } = string.Empty;
-	public int TimeoutFromSeconds { get; set; }
 }
