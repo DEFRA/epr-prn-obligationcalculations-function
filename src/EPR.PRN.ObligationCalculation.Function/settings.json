@@ -3,14 +3,13 @@
   "Values": {
     "ApplicationConfig__DefaultRunDate": "UseDevelopmentStorage=true",
     "ApplicationConfig__LogPrefix": "[EPR.PRN.ObligationCalculation]",
-    "ApplicationConfig__FunctionIsEnabled": false,
+    "ApplicationConfig__FunctionIsEnabled": false,    
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
     "PrnServiceApi__BaseUrl": "UseDevelopmentStorage=true",
     "PrnServiceApi__ClientId": "UseDevelopmentStorage=true",
     "PrnServiceApi__LogPrefix": "[EPR.PRN.ObligationCalculation]",
-    "PrnServiceApi__TimeoutFromSeconds": 360,
-    "PrnServiceApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",
+    "PrnServiceApi__PrnCalculateEndPoint": "UseDevelopmentStorage=true",    
     "ServiceBus__FullyQualifiedNamespace": "UseDevelopmentStorage=true",
     "ServiceBus__LogPrefix": "[EPR.PRN.ObligationCalculation]",
     "ServiceBus__ObligationLastSuccessfulRunQueueName": "UseDevelopmentStorage=true",
@@ -18,7 +17,6 @@
     "SubmissionsServiceApi__BaseUrl": "UseDevelopmentStorage=true",
     "SubmissionsServiceApi__ClientId": "UseDevelopmentStorage=true",
     "SubmissionsServiceApi__LogPrefix": "[EPR.PRN.ObligationCalculation]",
-    "SubmissionsServiceApi__TimeoutFromSeconds": 360,
     "StoreApprovedSubmissions__Schedule": "0 0 10 * * MON-FRI",
     "SubmissionsServiceApi__SubmissionsEndPoint": "UseDevelopmentStorage=true"
   }
