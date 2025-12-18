@@ -27,16 +27,23 @@ public static class ConfigurationExtensions
         return services;
     }
 
-    public static IServiceCollection AddAzureClients(this IServiceCollection services)
+    public static IServiceCollection AddAzureClients(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddAzureClients(clientBuilder =>
             {
                 clientBuilder.AddClient<ServiceBusClient, ServiceBusClientOptions>(options =>
                 {
-                    options.TransportType = ServiceBusTransportType.AmqpWebSockets;
-                    var sp = services.BuildServiceProvider();
-                    var serviceBusConfig = sp.GetRequiredService<IOptions<ServiceBusConfig>>().Value;
-                    return new(serviceBusConfig.FullyQualifiedNamespace, new DefaultAzureCredential(), options);
+                    var serviceBusConfig = services.BuildServiceProvider().GetRequiredService<IOptions<ServiceBusConfig>>().Value;
+
+                    if (!string.IsNullOrWhiteSpace(serviceBusConfig.FullyQualifiedNamespace))
+                    {
+                        options.TransportType = ServiceBusTransportType.AmqpWebSockets;
+                        return new ServiceBusClient(fullyQualifiedNamespace: serviceBusConfig.FullyQualifiedNamespace, new DefaultAzureCredential(), options);
+                    }
+                    else
+                    {
+                        return new ServiceBusClient(connectionString: configuration["ServiceBus"], options);
+                    }
                 });
             });
 
