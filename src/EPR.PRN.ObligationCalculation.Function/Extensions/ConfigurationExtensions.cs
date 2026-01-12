@@ -77,5 +77,6 @@ public static class ConfigurationExtensions
 
     private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy() => HttpPolicyExtensions
         .HandleTransientHttpError()
+        .OrResult(r => (int)r.StatusCode == 499)
         .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(3, retryAttempt)));
 }
