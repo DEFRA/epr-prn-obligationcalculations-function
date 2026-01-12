@@ -33,8 +33,8 @@ The structure of the application settings can be found in the repository. Exampl
 Polly is used to retry http requests. Policies are added to http clients in the in the `ConfigurationExtensions` class.
 
 ## Running on a developer machine
-To run locally, create a file `local.settings.json`. This file is in `.gitignore`.
-Then, Replace service bus namespace with connection string in AddAzureClients method for ServiceBusClient in the `ConfigurationExtensions` class.
+To run locally, create a file `local.settings.json`. This file is in `.gitignore`. 
+When using the emulator set `ServiceBus` to the connection string with `UseDevelopmentEmulator=true` instead of the `ServiceBus__FullyQualifiedNamespace`.
 
 ```
 {
@@ -50,10 +50,10 @@ Then, Replace service bus namespace with connection string in AddAzureClients me
     "PrnServiceApi__BaseUrl": "",
     "PrnServiceApi__PrnCalculateEndPoint": "api/v1/prn/organisation/{0}/calculate",
     "PrnServiceApi__ClientId": "",
-    "ServiceBus__FullyQualifiedNamespace": "",
+    "ServiceBus": "",
     "ServiceBus__ObligationQueueName": "defra.epr.obligation.dev10",
     "ServiceBus__ObligationLastSuccessfulRunQueueName": "defra.epr.obligationlastsuccessfulrun.dev10",
-	"ServiceBus__LogPrefix": "[EPR.PRN.ObligationCalculation]",
+	  "ServiceBus__LogPrefix": "[EPR.PRN.ObligationCalculation]",
     "ApplicationConfig__LogPrefix": "[EPR.PRN.ObligationCalculation]",
     "ApplicationConfig__DefaultRunDate": "2024-01-01",
     "ApplicationConfig__FunctionIsEnabled": "true",

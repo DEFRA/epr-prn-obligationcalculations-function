@@ -28,7 +28,7 @@ namespace EPR.PRN.ObligationCalculation.Function
 			services.AddTransient<SubmissionsServiceAuthorisationHandler>();
 			services.ConfigureOptions(hostingContext.Configuration);
             services.AddHttpClients();
-            services.AddAzureClients();
+            services.AddAzureClients(hostingContext.Configuration);
         })
         .Build();
 
