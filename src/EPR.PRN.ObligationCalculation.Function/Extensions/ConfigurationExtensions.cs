@@ -1,8 +1,8 @@
 ﻿using Azure.Identity;
 using Azure.Messaging.ServiceBus;
 using EPR.PRN.ObligationCalculation.Application.Configs;
-using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.Handlers;
+using EPR.PRN.ObligationCalculation.Function.Services;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,24 +52,24 @@ public static class ConfigurationExtensions
 
     public static IServiceCollection AddHttpClients(this IServiceCollection services)
     {
-        services.AddHttpClient<ISubmissionsDataService, SubmissionsDataService>((sp, c) =>
+        services.AddHttpClient<IEprCommonDataApiService, EprCommonDataApiService>((sp, c) =>
         {
             var config = sp.GetRequiredService<IOptions<SubmissionsServiceApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			c.Timeout = TimeSpan.FromSeconds(360);
 		})
-		.AddHttpMessageHandler<SubmissionsServiceAuthorisationHandler>()
+		.AddHttpMessageHandler<EprCommonDataApiAuthorisationHandler>()
         .AddPolicyHandler(GetRetryPolicy());
 
-        services.AddHttpClient<IPrnService, PrnService>((sp, c) =>
+        services.AddHttpClient<IEprPrnCommonBackendService, EprPrnCommonBackendService>((sp, c) =>
         {
             var config = sp.GetRequiredService<IOptions<PrnServiceApiConfig>>().Value;
             c.BaseAddress = new Uri(config.BaseUrl);
             c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 			c.Timeout = TimeSpan.FromSeconds(360);
 		})
-        .AddHttpMessageHandler<PrnServiceAuthorisationHandler>()
+        .AddHttpMessageHandler<EprPrnCommonBackendAuthorisationHandler>()
 		.AddPolicyHandler(GetRetryPolicy());
 
         return services;

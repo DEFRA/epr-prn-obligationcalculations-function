@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EPR.PRN.ObligationCalculati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EPR.PRN.ObligationCalculation.Application", "EPR.PRN.ObligationCalculation.Application\EPR.PRN.ObligationCalculation.Application.csproj", "{56B95E50-09BD-4DF0-A952-1171340EE39A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.PRN.ObligationCalculation.Application.UnitTests", "EPR.PRN.ObligationCalculation.Application.UnitTests\EPR.PRN.ObligationCalculation.Application.UnitTests.csproj", "{1718FE76-4293-4089-BFA1-29D24E4502C6}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.PRN.ObligationCalculation.Function.UnitTests", "EPR.PRN.ObligationCalculation.Function.UnitTests\EPR.PRN.ObligationCalculation.Function.UnitTests.csproj", "{4BA50393-D922-445A-92A6-9587AF4CB52D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.PRN.ObligationCalculation.Function.IntegrationTests", "EPR.PRN.ObligationCalculation.Function.IntegrationTests\EPR.PRN.ObligationCalculation.Function.IntegrationTests.csproj", "{7F1E29E4-80A2-466B-B091-6BAB20B7A4A2}"

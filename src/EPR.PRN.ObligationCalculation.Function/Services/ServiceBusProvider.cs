@@ -5,41 +5,22 @@ using EPR.PRN.ObligationCalculation.Application.DTOs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace EPR.PRN.ObligationCalculation.Application.Services;
+namespace EPR.PRN.ObligationCalculation.Function.Services;
+
+
+public interface IServiceBusProvider
+{
+    Task<string?> GetLastSuccessfulRunDateFromQueue();
+
+    Task SendApprovedSubmissionsToQueueAsync(Guid submitterId, List<ApprovedSubmissionEntity> submissions);
+
+    Task SendSuccessfulRunDateToQueue(string runDate);
+}
+
 
 public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusClient serviceBusClient, IOptions<ServiceBusConfig> config) : IServiceBusProvider
 {
     private static readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
-    public async Task SendApprovedSubmissionsToQueueAsync(List<ApprovedSubmissionEntity> approvedSubmissionEntities)
-    {
-        try
-        {
-            if (approvedSubmissionEntities.Count == 0)
-            {
-                logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - No new submissions received from pom endpoint to queue", config.Value.LogPrefix);
-                return;
-            }
-
-            await using var sender = serviceBusClient.CreateSender(config.Value.ObligationQueueName);
-
-            var groupedSubmissions = approvedSubmissionEntities
-                .GroupBy(s => s.SubmitterId)
-                .Select(g => (SubmitterId: g.Key, Submissions: g.ToList()));
-
-            foreach (var (submitterId, submissions) in groupedSubmissions)
-            {
-                logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} with entity count {SubmissonsCount}", config.Value.LogPrefix, submitterId, submissions.Count);
-                await sender.SendMessageAsync(new ServiceBusMessage(JsonSerializer.Serialize(submissions, jsonOptions)));
-            }
-
-            logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Messages have been published to the obligation queue.", config.Value.LogPrefix);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Error sending messages to queue {Message}", config.Value.LogPrefix, ex.Message);
-            throw;
-        }
-    }
 
     public async Task<string?> GetLastSuccessfulRunDateFromQueue()
     {
@@ -76,18 +57,32 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
         }
     }
 
+    public async Task SendApprovedSubmissionsToQueueAsync(Guid submitterId, List<ApprovedSubmissionEntity> submissions)
+    {
+        try
+        {
+            logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} with entity count {SubmissonsCount}", config.Value.LogPrefix, submitterId, submissions.Count);
+            await using var sender = serviceBusClient.CreateSender(config.Value.ObligationQueueName);
+            await sender.SendMessageAsync(new ServiceBusMessage(JsonSerializer.Serialize(submissions, jsonOptions)));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Error sending messages to queue {Message}", config.Value.LogPrefix, ex.Message);
+            throw;
+        }
+    }
+
     public async Task SendSuccessfulRunDateToQueue(string runDate)
     {
         try
         {
             await using var sender = serviceBusClient.CreateSender(config.Value.ObligationLastSuccessfulRunQueueName);
-            var message = new ServiceBusMessage(runDate);
-            await sender.SendMessageAsync(message);
-            logger.LogInformation("{LogPrefix}: SendSuccessfulRunDateToQueue: Updated currect successful run date ({RunDate})to queue", config.Value.LogPrefix, runDate);
+            await sender.SendMessageAsync(new ServiceBusMessage(runDate));
+            logger.LogInformation("{LogPrefix}: SendSuccessfulRunDateToQueue - Updated currect successful run date ({RunDate})to queue", config.Value.LogPrefix, runDate);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "{LogPrefix}: SendSuccessfulRunDateToQueue: Error whild sending runDate message: {Message}", config.Value.LogPrefix, ex.Message);
+            logger.LogError(ex, "{LogPrefix}: SendSuccessfulRunDateToQueue - Error whild sending runDate message: {Message}", config.Value.LogPrefix, ex.Message);
             throw;
         }
     }

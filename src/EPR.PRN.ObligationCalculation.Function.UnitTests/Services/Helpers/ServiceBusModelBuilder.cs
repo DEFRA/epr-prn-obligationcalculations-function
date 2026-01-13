@@ -1,6 +1,6 @@
 ﻿using Azure.Messaging.ServiceBus;
 
-namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Helpers;
+namespace EPR.PRN.ObligationCalculation.Function.UnitTests.Services.Helpers;
 
 public static class ServiceBusModelBuilder
 {
