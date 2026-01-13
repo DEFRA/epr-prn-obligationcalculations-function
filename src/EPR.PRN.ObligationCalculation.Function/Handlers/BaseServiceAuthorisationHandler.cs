@@ -19,7 +19,8 @@ public class BaseServiceAuthorisationHandler : DelegatingHandler
 			return;
 		}
 
-		_tokenRequestContext = new TokenRequestContext([clientId]);
+		// _tokenRequestContext = new TokenRequestContext([clientId]);
+		_tokenRequestContext = new TokenRequestContext(new[] { $"{clientId}/.default" });
 		_credentials = new DefaultAzureCredential();
 	}
 

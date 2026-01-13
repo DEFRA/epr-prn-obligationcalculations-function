@@ -1,7 +1,7 @@
-using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.Extensions;
 using EPR.PRN.ObligationCalculation.Function.Handlers;
 using Microsoft.Azure.Functions.Worker;
+using EPR.PRN.ObligationCalculation.Function.Services;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,11 +27,11 @@ namespace EPR.PRN.ObligationCalculation.Function
         {
             services.AddCustomApplicationInsights();
             services.AddHttpClient();
-            services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
-            services.AddScoped<IPrnService, PrnService>();
+            services.AddScoped<IEprCommonDataApiService, EprCommonDataApiService>();
+            services.AddScoped<IEprPrnCommonBackendService, EprPrnCommonBackendService>();
             services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
-			services.AddTransient<PrnServiceAuthorisationHandler>();
-			services.AddTransient<SubmissionsServiceAuthorisationHandler>();
+            services.AddTransient<EprCommonDataApiAuthorisationHandler>();
+            services.AddTransient<EprPrnCommonBackendAuthorisationHandler>();
 			services.ConfigureOptions(hostingContext.Configuration);
             services.AddHttpClients();
             services.AddAzureClients(hostingContext.Configuration);

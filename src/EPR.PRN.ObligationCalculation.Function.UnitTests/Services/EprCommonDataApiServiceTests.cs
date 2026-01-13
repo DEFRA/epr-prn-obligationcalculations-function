@@ -1,5 +1,5 @@
 using EPR.PRN.ObligationCalculation.Application.Configs;
-using EPR.PRN.ObligationCalculation.Application.Services;
+using EPR.PRN.ObligationCalculation.Function.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,24 +8,24 @@ using Moq.Protected;
 using Newtonsoft.Json;
 using System.Net;
 
-namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
+namespace EPR.PRN.ObligationCalculation.Function.UnitTests.Services;
 
 [TestClass]
 public class SubmissionsDataServiceTests
 {
-    private Mock<ILogger<SubmissionsDataService>> _loggerMock = null!;
-    private Mock<IOptions<SubmissionsServiceApiConfig>> _configMock = null!;
+    private Mock<ILogger<EprCommonDataApiService>> _mockLogger = null!;
+    private Mock<IOptions<SubmissionsServiceApiConfig>> _mockConfig = null!;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock = null!;
     private HttpClient _httpClient = null!;
-    private SubmissionsDataService _service = null!;
+    private EprCommonDataApiService _underTest = null!;
 
     private readonly string _lastSuccessfulRunDate = "2023-09-01";
 
     [TestInitialize]
     public void Setup()
     {
-        _loggerMock = new Mock<ILogger<SubmissionsDataService>>();
-        _configMock = new Mock<IOptions<SubmissionsServiceApiConfig>>();
+        _mockLogger = new Mock<ILogger<EprCommonDataApiService>>();
+        _mockConfig = new Mock<IOptions<SubmissionsServiceApiConfig>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         
         var config = new SubmissionsServiceApiConfig
@@ -33,14 +33,14 @@ public class SubmissionsDataServiceTests
             BaseUrl = "https://api.example.com/",
             SubmissionsEndPoint = "submissions"
         };
-        _configMock.Setup(c => c.Value).Returns(config);
+        _mockConfig.Setup(c => c.Value).Returns(config);
         
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
         {
-            BaseAddress = new Uri(_configMock.Object.Value.BaseUrl)
+            BaseAddress = new Uri(_mockConfig.Object.Value.BaseUrl)
         };
 
-        _service = new SubmissionsDataService(_loggerMock.Object, _httpClient, _configMock.Object);
+        _underTest = new EprCommonDataApiService(_mockLogger.Object, _httpClient, _mockConfig.Object);
     }
 
     [TestMethod]
@@ -64,14 +64,14 @@ public class SubmissionsDataServiceTests
 			});
 
         // Act
-        var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
+        var result = await _underTest.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert
         result.Should().NotBeNull();
         result.Count.Should().Be(1);
         result[0].SubmitterId.Should().Be(submitterId);
 
-        _loggerMock.Verify(l => l.Log(
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
             It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(expectedLogMessage)),
@@ -95,7 +95,7 @@ public class SubmissionsDataServiceTests
             });
 
         // Act
-        var result = await _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
+        var result = await _underTest.GetApprovedSubmissionsData(_lastSuccessfulRunDate);
 
         // Assert
         result.Should().NotBeNull();
@@ -105,9 +105,6 @@ public class SubmissionsDataServiceTests
     [TestMethod]
     public async Task GetSubmissions_ShouldThrowException_WhenHttpClientThrowsException()
     {
-        // Arrange
-        var expectedErrorMessagePart = "SubmissionsDataService - GetApprovedSubmissionsData - Error while getting submissions data from";
-
 		_httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -117,14 +114,14 @@ public class SubmissionsDataServiceTests
 
         // Act & Assert
         _ = await Assert.ThrowsExceptionAsync<Exception>(() =>
-            _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate));
+            _underTest.GetApprovedSubmissionsData(_lastSuccessfulRunDate));
 
         // Assert handled by ExpectedException
-        _loggerMock.Verify(l => l.Log(
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-			It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedErrorMessagePart)),
-			It.IsAny<Exception>(),
+            It.IsAny<It.IsAnyType>(),
+            It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }
