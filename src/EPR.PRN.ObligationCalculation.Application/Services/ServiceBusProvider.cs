@@ -19,21 +19,17 @@ public class ServiceBusProvider(ILogger<ServiceBusProvider> logger, ServiceBusCl
                 logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - No new submissions received from pom endpoint to queue", config.Value.LogPrefix);
                 return;
             }
-            var submitterIds = approvedSubmissionEntities
-                                    .Select(r => r.SubmitterId)
-                                    .Distinct()
-                                    .ToList();
 
             await using var sender = serviceBusClient.CreateSender(config.Value.ObligationQueueName);
 
-            foreach (var submitterId in submitterIds)
-            {
-                var submissions = approvedSubmissionEntities.Where(s => s.SubmitterId == submitterId).ToList();
-                var jsonSumissions = JsonSerializer.Serialize(submissions, jsonOptions);
-				
-                logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} with entity count {SubmissonsCount}", config.Value.LogPrefix, submitterId, submissions.Count);
+            var groupedSubmissions = approvedSubmissionEntities
+                .GroupBy(s => s.SubmitterId)
+                .Select(g => (SubmitterId: g.Key, Submissions: g.ToList()));
 
-				await sender.SendMessageAsync(new ServiceBusMessage(jsonSumissions));
+            foreach (var (submitterId, submissions) in groupedSubmissions)
+            {
+                logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Sending message to obligation queue: Submitter Id - {SubmitterId} with entity count {SubmissonsCount}", config.Value.LogPrefix, submitterId, submissions.Count);
+                await sender.SendMessageAsync(new ServiceBusMessage(JsonSerializer.Serialize(submissions, jsonOptions)));
             }
 
             logger.LogInformation("{LogPrefix}: SendApprovedSubmissionsToQueueAsync - Messages have been published to the obligation queue.", config.Value.LogPrefix);
