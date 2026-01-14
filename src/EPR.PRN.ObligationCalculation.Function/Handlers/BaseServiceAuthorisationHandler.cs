@@ -10,7 +10,7 @@ namespace EPR.PRN.ObligationCalculation.Function.Handlers;
 public class BaseServiceAuthorisationHandler : DelegatingHandler
 {
 	private readonly TokenRequestContext _tokenRequestContext;
-	private readonly DefaultAzureCredential? _credentials;
+	private readonly TokenCredential? _credentials;
 
 	public BaseServiceAuthorisationHandler(string clientId)
 	{
@@ -19,9 +19,8 @@ public class BaseServiceAuthorisationHandler : DelegatingHandler
 			return;
 		}
 
-		// _tokenRequestContext = new TokenRequestContext([clientId]);
 		_tokenRequestContext = new TokenRequestContext(new[] { $"{clientId}/.default" });
-		_credentials = new DefaultAzureCredential();
+        _credentials = new ManagedIdentityCredential();
 	}
 
 	protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
