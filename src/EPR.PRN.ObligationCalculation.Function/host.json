@@ -13,11 +13,5 @@
             },
             "enableLiveMetricsFilters": true
         }
-    },
-    "extensions": {
-        "serviceBus": {
-            "maxConcurrentCalls": 1,
-            "prefetchCount": 1
-        }
     }
 }
