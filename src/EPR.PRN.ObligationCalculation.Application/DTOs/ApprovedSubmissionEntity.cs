@@ -17,4 +17,6 @@ public class ApprovedSubmissionEntity
 
     public string SubmitterType { get; set; } = string.Empty;
 
+    public int? NumberOfDaysObligated { get; set; }
+
 }
