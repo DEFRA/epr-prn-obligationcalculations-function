@@ -1,48 +1,56 @@
 using EPR.PRN.ObligationCalculation.Application.Configs;
-using EPR.PRN.ObligationCalculation.Application.Services;
+using EPR.PRN.ObligationCalculation.Function.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
+
+using System.Text.Json;
 
 namespace EPR.PRN.ObligationCalculation.Function;
 
-public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider, IOptions<ApplicationConfig> config)
+public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, IEprCommonDataApiService eprCommonDataApiService, IEprPrnCommonBackendService eprPrnCommonBackendService, IOptions<ApplicationConfig> config)
 {
+    private static readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
+
     [Function("StoreApprovedSubmissionsFunction")]
-    public async Task RunAsync([TimerTrigger("%StoreApprovedSubmissions:Schedule%")] TimerInfo myTimer)
+    public async Task PublishAsync([TimerTrigger("%StoreApprovedSubmissions:Schedule%")] TimerInfo myTimer)
     {
-        logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: New session started", config.Value.LogPrefix);
+        logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction - New session started", config.Value.LogPrefix);
 
         if (!config.Value.FunctionIsEnabled)
         {
-            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Exiting function as FunctionIsEnabled is set to {config.Value.FunctionIsEnabled}", config.Value.LogPrefix, config.Value.FunctionIsEnabled);
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction - Exiting function as FunctionIsEnabled is set to {config.Value.FunctionIsEnabled}", config.Value.LogPrefix, config.Value.FunctionIsEnabled);
             return;
         }
 
         try
         {
-            var lastSuccessfulRunDateFromQueue = await serviceBusProvider.GetLastSuccessfulRunDateFromQueue();
-            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Last run date {Date} retrieved from queue", config.Value.LogPrefix, lastSuccessfulRunDateFromQueue);
+            var approvedSubmissionEntities = await eprCommonDataApiService.GetApprovedSubmissionsData(DateTime.Now.Date.ToString("yyyy-MM-dd"));
+            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction - Sending Approved submission entities", config.Value.LogPrefix);
 
-            var lastSuccessfulRunDate = string.IsNullOrEmpty(lastSuccessfulRunDateFromQueue) ? config.Value.DefaultRunDate : lastSuccessfulRunDateFromQueue;
-
-            if (string.IsNullOrEmpty(lastSuccessfulRunDate))
+            if (approvedSubmissionEntities.Count == 0)
             {
-                logger.LogError("{LogPrefix}: StoreApprovedSubmissionsFunction: Last succesful run date is empty and function is terminated", config.Value.LogPrefix);
+                logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction - No submissions received", config.Value.LogPrefix);
                 return;
             }
 
-            var approvedSubmissionEntities = await submissionsService.GetApprovedSubmissionsData(lastSuccessfulRunDate);
-            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Approved submission entities retrieved from backnend", config.Value.LogPrefix);
+            var groupedSubmissions = approvedSubmissionEntities
+                .GroupBy(s => s.SubmitterId)
+                .Select(g => (SubmitterId: g.Key, Submissions: g.ToList()));
 
-            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Sending Approved submission entities to queue...", config.Value.LogPrefix);
-            await serviceBusProvider.SendApprovedSubmissionsToQueueAsync(approvedSubmissionEntities);
-
-            var currectRunDate = DateTime.Now.Date.ToString("yyyy-MM-dd");
-            logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Adding Successful RunDate To Queue {CurrectRunDate} ...", config.Value.LogPrefix, currectRunDate.ToString());
-            await serviceBusProvider.SendSuccessfulRunDateToQueue(currectRunDate);
-
+            foreach (var (submitterId, submissions) in groupedSubmissions)
+            {
+                try
+                {
+                    logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction - calculating submitterId {SubmitterId}", config.Value.LogPrefix, submitterId);
+                    await eprPrnCommonBackendService.CalculateApprovedSubmission(JsonSerializer.Serialize(submissions, jsonOptions));
+                    logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction - successfully calculated submitterId {MessageId}", config.Value.LogPrefix, submitterId);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "{LogPrefix}: ProcessApprovedSubmissionsFunction: Exception occurred while sending processing message: {Message}", config.Value.LogPrefix, ex.Message);
+                }
+            }
             logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: Completed storing submissions", config.Value.LogPrefix);
         }
         catch (Exception ex)

@@ -1,153 +1,142 @@
 ﻿using EPR.PRN.ObligationCalculation.Application.Configs;
-using EPR.PRN.ObligationCalculation.Application.Services;
+using EPR.PRN.ObligationCalculation.Application.DTOs;
+using EPR.PRN.ObligationCalculation.Function.Services;
+using EPR.PRN.ObligationCalculation.Function.UnitTests.Helpers;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using System.Text.Json;
 
 namespace EPR.PRN.ObligationCalculation.Function.UnitTests;
 
 [TestClass]
 public class StoreApprovedSubmissionsFunctionTests
 {
-    private Mock<ISubmissionsDataService> _submissionsDataService = null!;
-    private Mock<ILogger<StoreApprovedSubmissionsFunction>> _loggerMock = null!;
-    private Mock<IServiceBusProvider> _serviceBusProviderMock = null!;
-    private Mock<IOptions<ApplicationConfig>> _configMock = null!;
-    private StoreApprovedSubmissionsFunction _function = null!;
+    private Mock<ILogger<StoreApprovedSubmissionsFunction>> _mockLogger = null!;
+    private Mock<IEprCommonDataApiService> _mockEprCommonDataApiService = null!;
+    private Mock<IEprPrnCommonBackendService> _mockEprPrnCommonBackendService = null!;
+    private Mock<IOptions<ApplicationConfig>> _mockConfig = null!;
+    private StoreApprovedSubmissionsFunction _underTest = null!;
     private TimerInfo _timerInfo = null!;
 
     [TestInitialize]
     public void TestInitialize()
     {
+        _mockLogger = new Mock<ILogger<StoreApprovedSubmissionsFunction>>();
         _timerInfo = new TimerInfo();
-        _loggerMock = new Mock<ILogger<StoreApprovedSubmissionsFunction>>();
-        _submissionsDataService = new Mock<ISubmissionsDataService>();
-        _serviceBusProviderMock = new Mock<IServiceBusProvider>();
+        _mockEprCommonDataApiService = new Mock<IEprCommonDataApiService>();
+        _mockEprPrnCommonBackendService = new Mock<IEprPrnCommonBackendService>();
 
-        _configMock = new Mock<IOptions<ApplicationConfig>>();
+        _mockConfig = new Mock<IOptions<ApplicationConfig>>();
         var config = new ApplicationConfig
         {
             DefaultRunDate = "2024-01-01",
-            FunctionIsEnabled = true
+            FunctionIsEnabled = true,
+            LogPrefix = "TEST"
         };
+        _mockConfig.Setup(c => c.Value).Returns(config);
 
-        _configMock.Setup(c => c.Value).Returns(config);
-    }
-
-    [TestMethod]
-    public async Task RunAsync_FunctionIsDisabled_ShouldLog()
-    {
-        var config = new ApplicationConfig
+        var mockApprovedSubmissions = new List<ApprovedSubmissionEntity>
         {
-            FunctionIsEnabled = false
+            new ApprovedSubmissionEntity
+            {
+                OrganisationId = Guid.NewGuid(),
+                SubmissionPeriod = "2025-Q1",
+                PackagingMaterial = "Plastic",
+                PackagingMaterialWeight = 100,
+                SubmitterId = Guid.NewGuid(),
+                SubmitterType = "Producer"
+            }
         };
 
-        _configMock.Setup(x => x.Value).Returns(config);
+        _mockEprCommonDataApiService
+            .Setup(s => s.GetApprovedSubmissionsData(It.IsAny<string>()))
+            .ReturnsAsync(mockApprovedSubmissions);
 
-        // Arrange
-        _function = new StoreApprovedSubmissionsFunction(
-            _loggerMock.Object,
-            _submissionsDataService.Object,
-            _serviceBusProviderMock.Object,
-            _configMock.Object);
+        _underTest = new StoreApprovedSubmissionsFunction(
+            _mockLogger.Object,
+            _mockEprCommonDataApiService.Object,
+            _mockEprPrnCommonBackendService.Object,
+            _mockConfig.Object);
+    }
 
-        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync("2024-10-10");
+    // -------------------------- PUBLISH --------------------------
+
+    [TestMethod]
+    public async Task PublishAsync_FunctionDisabled_ShouldLogAndExit()
+    {
+        var config = new ApplicationConfig { FunctionIsEnabled = false, LogPrefix = "TEST" };
+        _mockConfig.Setup(x => x.Value).Returns(config);
 
         // Act
-        await _function.RunAsync(_timerInfo);
+        await _underTest.PublishAsync(_timerInfo);
 
-        // Assert
-        _loggerMock.Verify(l => l.Log(
+        // Assert - logs the disabled message
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
+            It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains("Exiting function")),
             null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(2));
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+
+        // No further calls to backend service
+        _mockEprPrnCommonBackendService.Verify(s => s.CalculateApprovedSubmission(It.IsAny<string>()), Times.Never);
     }
 
     [TestMethod]
-    [DataRow("", 6)]
-    [DataRow(null, 6)]
-    [DataRow("2024-10-10", 6)]
-    public async Task RunAsync_ShouldSendApprovedSubmissionsToQueue_WhenSubmissionsSentToQueue(string lastSuccessfulRunDateFromQueue, int logInformationCount)
+    public async Task PublishAsync_NoSubmissions_ShouldLogAndExit()
     {
-        // Arrange
-        _function = new StoreApprovedSubmissionsFunction(
-            _loggerMock.Object,
-            _submissionsDataService.Object,
-            _serviceBusProviderMock.Object,
-            _configMock.Object);
-
-        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDateFromQueue);
+        _mockEprCommonDataApiService.Setup(s => s.GetApprovedSubmissionsData(It.IsAny<string>()))
+            .ReturnsAsync(new List<ApprovedSubmissionEntity>());
 
         // Act
-        await _function.RunAsync(_timerInfo);
+        await _underTest.PublishAsync(_timerInfo);
 
-        // Assert
-        _loggerMock.Verify(l => l.Log(
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(logInformationCount));
+            It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains("No submissions received")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+
+        _mockEprPrnCommonBackendService.Verify(s => s.CalculateApprovedSubmission(It.IsAny<string>()), Times.Never);
     }
 
     [TestMethod]
-    [DataRow(null)]
-    [DataRow("")]
-    public async Task RunAsync_Terminated_WhenRunDateIsNullOrEmpty(string lastSuccessfulRunDate)
+    public async Task PublishAsync_WithSubmissions_ShouldCallCalculateApprovedSubmission()
     {
-        // Arrange
-        _configMock.Object.Value.DefaultRunDate = lastSuccessfulRunDate;
-        _function = new StoreApprovedSubmissionsFunction(
-            _loggerMock.Object,
-            _submissionsDataService.Object,
-            _serviceBusProviderMock.Object,
-            _configMock.Object);
-
-        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDate);
-
         // Act
-        await _function.RunAsync(_timerInfo);
+        await _underTest.PublishAsync(_timerInfo);
 
         // Assert
-        _loggerMock.Verify(l => l.Log(
-            LogLevel.Error,
+        _mockEprPrnCommonBackendService.Verify(
+            s => s.CalculateApprovedSubmission(It.Is<string>(body => body.Contains("Plastic"))),
+            Times.Once);
+
+        _mockLogger.Verify(l => l.Log(
+            LogLevel.Information,
             It.IsAny<EventId>(),
-            It.IsAny<It.IsAnyType>(),
-            It.IsAny<Exception>(),
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Exactly(1));
+            It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains("successfully calculated")),
+            null,
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 
     [TestMethod]
-    public async Task RunAsync_ShouldHandleException_WhenErrorOccurs()
+    public async Task PublishAsync_WhenExceptionOccurs_ShouldLogErrorAndThrow()
     {
-        // Arrange
-        var expectedErrorMessagePart = "StoreApprovedSubmissionsFunction: Ended with error while storing approved submission";
-
-		_function = new StoreApprovedSubmissionsFunction(
-            _loggerMock.Object,
-            _submissionsDataService.Object,
-            _serviceBusProviderMock.Object,
-            _configMock.Object);
-
-        var lastSuccessfulRunDate = "2024-10-10";
-        _serviceBusProviderMock.Setup(x => x.GetLastSuccessfulRunDateFromQueue()).ReturnsAsync(lastSuccessfulRunDate);
-
-        _submissionsDataService
-            .Setup(x => x.GetApprovedSubmissionsData(It.IsAny<string>()))
+        _mockEprCommonDataApiService.Setup(s => s.GetApprovedSubmissionsData(It.IsAny<string>()))
             .ThrowsAsync(new Exception("Test Exception"));
 
-        // Act & Assert
-        await Assert.ThrowsExceptionAsync<Exception>(() => _function.RunAsync(_timerInfo));
+        var ex = await Assert.ThrowsExceptionAsync<Exception>(() => _underTest.PublishAsync(_timerInfo));
 
-        // Assert - Ex
-        _loggerMock.Verify(l => l.Log(
+        Assert.AreEqual("Test Exception", ex.Message);
+
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
-			It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(expectedErrorMessagePart)),
-			It.IsAny<Exception>(),
+            It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains("Ended with error while storing approved submission")),
+            It.IsAny<Exception>(),
             It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
     }
 }

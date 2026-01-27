@@ -2,31 +2,31 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using EPR.PRN.ObligationCalculation.Application.Configs;
-using EPR.PRN.ObligationCalculation.Application.Services;
+using EPR.PRN.ObligationCalculation.Function.Services;
 using Newtonsoft.Json;
 using Moq;
 using Moq.Protected;
 using EPR.PRN.ObligationCalculation.Application.DTOs;
 
-namespace EPR.PRN.ObligationCalculation.Application.UnitTests.Services;
+namespace EPR.PRN.ObligationCalculation.Function.UnitTests.Services;
 
 [TestClass]
-public class PrnServiceTests
+public class EprPrnCommonBackendServiceTests
 {
-    private Mock<ILogger<PrnService>> _loggerMock = null!;
+    private Mock<ILogger<EprPrnCommonBackendService>> _mockLogger = null!;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock = null!;
-    private Mock<IOptions<PrnServiceApiConfig>> _configMock = null!;
+    private Mock<IOptions<PrnServiceApiConfig>> _mockConfig = null!;
     private HttpClient _httpClient = null!;
-    private PrnService _prnService = null!;
+    private EprPrnCommonBackendService _underTest = null!;
     private PrnServiceApiConfig _config = null!;
     private string _submissionJson = string.Empty;
 
 	[TestInitialize]
     public void Setup()
     {
-        _loggerMock = new Mock<ILogger<PrnService>>();
+        _mockLogger = new Mock<ILogger<EprPrnCommonBackendService>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
-        _configMock = new Mock<IOptions<PrnServiceApiConfig>>();
+        _mockConfig = new Mock<IOptions<PrnServiceApiConfig>>();
 
         // Setup config
         _config = new PrnServiceApiConfig
@@ -35,14 +35,14 @@ public class PrnServiceTests
             PrnCalculateEndPoint = "api/calculate/{0}"
         };
 
-        _configMock.Setup(c => c.Value).Returns(_config);
+        _mockConfig.Setup(c => c.Value).Returns(_config);
 
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object)
         {
-            BaseAddress = new Uri(_configMock.Object.Value.BaseUrl)
+            BaseAddress = new Uri(_mockConfig.Object.Value.BaseUrl)
         };
 
-        _prnService = new PrnService(_loggerMock.Object, _httpClient, _configMock.Object);
+        _underTest = new EprPrnCommonBackendService(_mockLogger.Object, _httpClient, _mockConfig.Object);
 
 		_submissionJson = JsonConvert.SerializeObject(new List<ApprovedSubmissionEntity>
 		{
@@ -57,10 +57,10 @@ public class PrnServiceTests
         string emptySubmission = string.Empty;
 
         // Act
-        await _prnService.ProcessApprovedSubmission(emptySubmission);
+        await _underTest.CalculateApprovedSubmission(emptySubmission);
 
         // Assert
-        _loggerMock.Verify(l => l.Log(
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Information,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
@@ -84,7 +84,7 @@ public class PrnServiceTests
             });
 
         // Act
-        await _prnService.ProcessApprovedSubmission(_submissionJson);
+        await _underTest.CalculateApprovedSubmission(_submissionJson);
 
         // Assert
         _httpMessageHandlerMock
@@ -113,10 +113,10 @@ public class PrnServiceTests
 
         // Act & Assert
         _ = await Assert.ThrowsExceptionAsync<HttpRequestException>(() =>
-            _prnService.ProcessApprovedSubmission(_submissionJson));
+            _underTest.CalculateApprovedSubmission(_submissionJson));
         
         // Assert handled by ExpectedException
-        _loggerMock.Verify(l => l.Log(
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),
@@ -137,10 +137,10 @@ public class PrnServiceTests
 
         // Act & Assert
         _ = await Assert.ThrowsExceptionAsync<Exception>(() =>
-            _prnService.ProcessApprovedSubmission(_submissionJson));
+            _underTest.CalculateApprovedSubmission(_submissionJson));
 
         // Assert handled by ExpectedException
-        _loggerMock.Verify(l => l.Log(
+        _mockLogger.Verify(l => l.Log(
             LogLevel.Error,
             It.IsAny<EventId>(),
             It.IsAny<It.IsAnyType>(),

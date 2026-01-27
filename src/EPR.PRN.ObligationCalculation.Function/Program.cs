@@ -1,6 +1,6 @@
-using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.Extensions;
 using EPR.PRN.ObligationCalculation.Function.Handlers;
+using EPR.PRN.ObligationCalculation.Function.Services;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,63 +16,46 @@ namespace EPR.PRN.ObligationCalculation.Function
         public static async Task Main(string[] args)
         {
             var host = new HostBuilder()
-        .ConfigureFunctionsWebApplication()
-        .ConfigureLogging(logging =>
-        {
-            logging.ClearProviders();
-            logging.AddApplicationInsights();
-            logging.SetMinimumLevel(LogLevel.Information);
-        })
-        .ConfigureServices((hostingContext, services) =>
-        {
-            services.AddCustomApplicationInsights();
-            services.AddHttpClient();
-            services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
-            services.AddScoped<IPrnService, PrnService>();
-            services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
-			services.AddTransient<PrnServiceAuthorisationHandler>();
-			services.AddTransient<SubmissionsServiceAuthorisationHandler>();
-			services.ConfigureOptions(hostingContext.Configuration);
-            services.AddHttpClients();
-            services.AddAzureClients(hostingContext.Configuration);
-        })
-        .Build();
+                .ConfigureFunctionsWebApplication()
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                    logging.AddApplicationInsights();
+                    logging.SetMinimumLevel(LogLevel.Information);
+                })
+                .ConfigureServices((hostingContext, services) =>
+                {
+                    services.AddCustomApplicationInsights();
+                    services.AddHttpClient();
+                    services.AddScoped<IEprCommonDataApiService, EprCommonDataApiService>();
+                    services.AddScoped<IEprPrnCommonBackendService, EprPrnCommonBackendService>();
+                    services.AddTransient<EprCommonDataApiAuthorisationHandler>();
+                    services.AddTransient<EprPrnCommonBackendAuthorisationHandler>();
+                    services.ConfigureOptions(hostingContext.Configuration);
+                    services.AddHttpClients();
+                    services.AddAzureClients(hostingContext.Configuration);
+                })
+                .Build();
 
             await host.RunAsync();
         }
 
         public static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
         {
-            // Add AI worker service with custom options
             services.AddApplicationInsightsTelemetryWorkerService(options =>
             {
                 options.ConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
             });
 
-            // Configure Functions-specific AI settings
             services.ConfigureFunctionsApplicationInsights();
 
-            // Customize logging rules for Application Insights
             services.Configure<LoggerFilterOptions>(options =>
             {
                 const string aiProvider = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
-
-                // Remove existing default rule for AI provider, if any
                 var defaultRule = options.Rules.FirstOrDefault(r => r.ProviderName == aiProvider);
-                if (defaultRule != null)
-                {
-                    options.Rules.Remove(defaultRule);
-                }
-
-                // Add a new rule to log Information level and above for all categories
-                options.Rules.Add(
-                    new LoggerFilterRule(
-                        providerName: aiProvider,
-                        categoryName: null,
-                        logLevel: LogLevel.Information,
-                        filter: null
-                    )
-                );
+                if (defaultRule != null) options.Rules.Remove(defaultRule);
+                options.Rules.Add(new LoggerFilterRule(aiProvider, null, LogLevel.Information, null));
             });
 
             return services;

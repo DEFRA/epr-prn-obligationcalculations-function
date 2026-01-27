@@ -5,6 +5,6 @@ using Microsoft.Extensions.Options;
 namespace EPR.PRN.ObligationCalculation.Function.Handlers;
 
 [ExcludeFromCodeCoverage]
-public class SubmissionsServiceAuthorisationHandler(IOptions<SubmissionsServiceApiConfig> config) : BaseServiceAuthorisationHandler(config.Value.ClientId)
+public class EprCommonDataApiAuthorisationHandler(IOptions<SubmissionsServiceApiConfig> config) : BaseServiceAuthorisationHandler(config.Value.ClientId)
 {
 }
