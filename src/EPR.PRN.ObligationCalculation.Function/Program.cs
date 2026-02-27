@@ -17,12 +17,6 @@ namespace EPR.PRN.ObligationCalculation.Function
         {
             var host = new HostBuilder()
         .ConfigureFunctionsWebApplication()
-        .ConfigureLogging(logging =>
-        {
-            logging.ClearProviders();
-            logging.AddApplicationInsights();
-            logging.SetMinimumLevel(LogLevel.Information);
-        })
         .ConfigureServices((hostingContext, services) =>
         {
             services.AddCustomApplicationInsights();
