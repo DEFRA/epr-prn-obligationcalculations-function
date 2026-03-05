@@ -21,8 +21,10 @@ public class ProcessApprovedSubmissionsFunction(ILogger<ProcessApprovedSubmissio
         try
         {
             logger.LogInformation("{LogPrefix}: ProcessApprovedSubmissionsFunction: Received message with ID: {MessageId}", config.Value.LogPrefix, message.MessageId);
-            string messageBody = message.Body.ToString();
+            
+            var messageBody = message.Body.ToString();
             await prnService.ProcessApprovedSubmission(messageBody);
+            
             logger.LogInformation("{LogPrefix}: ProcessApprovedSubmissionsFunction: Processed message with ID: {MessageId}", config.Value.LogPrefix, message.MessageId);
         }
         catch (Exception ex)

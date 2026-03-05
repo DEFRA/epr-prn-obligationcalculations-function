@@ -8,22 +8,20 @@ namespace EPR.PRN.ObligationCalculation.Application.Services;
 
 public class SubmissionsDataService(ILogger<SubmissionsDataService> logger, HttpClient httpClient, IOptions<SubmissionsServiceApiConfig> config) : ISubmissionsDataService
 {
-
     public async Task<List<ApprovedSubmissionEntity>> GetApprovedSubmissionsData(string lastSuccessfulRunDate)
     {
-        logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Get Approved Submissions Data from {LastSuccessfulRunDate}", config.Value.LogPrefix, lastSuccessfulRunDate);
-
-        string endpoint = config.Value.SubmissionsEndPoint + lastSuccessfulRunDate;
+        var endpoint = config.Value.SubmissionsEndPoint + lastSuccessfulRunDate;
         logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Fetching Submissions data from: {Endpoint}", config.Value.LogPrefix, endpoint);
 
         try
         {
             var response = await httpClient.GetAsync(endpoint);
             response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadAsStringAsync();
+            
+            var content = await response.Content.ReadAsStringAsync();
             logger.LogInformation("{LogPrefix}: SubmissionsDataService - GetApprovedSubmissionsData - Received approved submissions data from: {Endpoint}", config.Value.LogPrefix, endpoint);
-            var submissionEntities = JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(result);
-            return submissionEntities ?? [];
+            
+            return JsonConvert.DeserializeObject<List<ApprovedSubmissionEntity>>(content) ?? [];
         }
         catch (Exception ex)
         {
