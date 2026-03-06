@@ -1,0 +1,24 @@
+using RestEase;
+using WireMock.Client;
+using Xunit;
+
+namespace EPR.PRN.ObligationCalculation.Function.IntegrationTests.Stubs;
+
+public class WireMockContext : IAsyncLifetime
+{
+    public static string BaseUri => "http://localhost:9090";
+
+    public IWireMockAdminApi WireMockAdminApi { get; } = RestClient.For<IWireMockAdminApi>(BaseUri);
+
+    public async Task InitializeAsync()
+    {
+        await WireMockAdminApi.ResetMappingsAsync();
+        await WireMockAdminApi.ResetRequestsAsync();
+        await WireMockAdminApi.ResetScenariosAsync();
+    }
+
+    public Task DisposeAsync()
+    {
+        return Task.CompletedTask;
+    }
+}

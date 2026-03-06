@@ -30,6 +30,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Polly" Version="8.5.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.26.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EPR.PRN.ObligationCalculation.Application\EPR.PRN.ObligationCalculation.Application.csproj" />
