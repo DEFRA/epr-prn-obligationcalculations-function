@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
+using EPR.PRN.ObligationCalculation.Function.Middleware;
 using Microsoft.Extensions.Configuration;
 
 namespace EPR.PRN.ObligationCalculation.Function
@@ -16,7 +17,12 @@ namespace EPR.PRN.ObligationCalculation.Function
         public static async Task Main(string[] args)
         {
             var host = new HostBuilder()
-                .ConfigureFunctionsWebApplication()
+                .ConfigureFunctionsWebApplication(
+                    (context, builder) =>
+                    {
+                        if (IsRunningLocally(context.Configuration))
+                            builder.UseMiddleware<FunctionRunningMiddleware>();
+                    })
                 .ConfigureServices((hostingContext, services) =>
                 {
                     services.AddCustomApplicationInsights();
@@ -28,7 +34,16 @@ namespace EPR.PRN.ObligationCalculation.Function
                     services.AddTransient<SubmissionsServiceAuthorisationHandler>();
                     services.ConfigureOptions(hostingContext.Configuration);
                     services.AddHttpClients();
-                    services.AddAzureClients(hostingContext.Configuration);
+
+                    var runningLocally = IsRunningLocally(hostingContext.Configuration);
+                    
+                    services.AddAzureClients(hostingContext.Configuration, runningLocally);
+
+                    if (runningLocally)
+                    {
+                        services.AddTransient<IBlobStorage, BlobStorage>();
+                        services.AddTransient<FunctionRunningMiddleware>();
+                    }
                 })
                 .ConfigureLogging(logging =>
                 {
@@ -78,5 +93,8 @@ namespace EPR.PRN.ObligationCalculation.Function
 
             return services;
         }
+        
+        private static bool IsRunningLocally(IConfiguration configuration) =>
+            configuration.GetValue<bool?>("IsRunningLocally") ?? false;
     }
 }
