@@ -1,11 +1,18 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS installer-env
-# Copy everything
-COPY NuGet.Config ./
+USER root
+
+COPY EPR.PRN.ObligationCalculation.Application/EPR.PRN.ObligationCalculation.Application.csproj ./EPR.PRN.ObligationCalculation.Application/.
+COPY EPR.PRN.ObligationCalculation.Function/EPR.PRN.ObligationCalculation.Function.csproj ./EPR.PRN.ObligationCalculation.Function/.
+
+# Restore
+RUN dotnet restore EPR.PRN.ObligationCalculation.Function/EPR.PRN.ObligationCalculation.Function.csproj
 
 COPY EPR.PRN.ObligationCalculation.Application/. ./EPR.PRN.ObligationCalculation.Application/.
 COPY EPR.PRN.ObligationCalculation.Function/. ./EPR.PRN.ObligationCalculation.Function/.
 
-# Publish 
+# Publish
+# cannot add --no-restore in the following command due to a dependency error but would hope to in the future
+# the early restore still saves ~25 seconds when building locally
 RUN dotnet publish EPR.PRN.ObligationCalculation.Function/*.csproj --output /home/site/wwwroot
 
 # Use the Azure Functions image as the final image
