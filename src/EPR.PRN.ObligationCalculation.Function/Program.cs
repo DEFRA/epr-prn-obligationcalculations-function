@@ -2,11 +2,11 @@ using EPR.PRN.ObligationCalculation.Application.Services;
 using EPR.PRN.ObligationCalculation.Function.Extensions;
 using EPR.PRN.ObligationCalculation.Function.Handlers;
 using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Configuration;
 
 namespace EPR.PRN.ObligationCalculation.Function
 {
@@ -16,58 +16,65 @@ namespace EPR.PRN.ObligationCalculation.Function
         public static async Task Main(string[] args)
         {
             var host = new HostBuilder()
-        .ConfigureFunctionsWebApplication()
-        .ConfigureServices((hostingContext, services) =>
-        {
-            services.AddCustomApplicationInsights();
-            services.AddHttpClient();
-            services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
-            services.AddScoped<IPrnService, PrnService>();
-            services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
-			services.AddTransient<PrnServiceAuthorisationHandler>();
-			services.AddTransient<SubmissionsServiceAuthorisationHandler>();
-			services.ConfigureOptions(hostingContext.Configuration);
-            services.AddHttpClients();
-            services.AddAzureClients(hostingContext.Configuration);
-        })
-        .Build();
+                .ConfigureFunctionsWebApplication()
+                .ConfigureServices((hostingContext, services) =>
+                {
+                    services.AddCustomApplicationInsights();
+                    services.AddHttpClient();
+                    services.AddScoped<ISubmissionsDataService, SubmissionsDataService>();
+                    services.AddScoped<IPrnService, PrnService>();
+                    services.AddScoped<IServiceBusProvider, ServiceBusProvider>();
+                    services.AddTransient<PrnServiceAuthorisationHandler>();
+                    services.AddTransient<SubmissionsServiceAuthorisationHandler>();
+                    services.ConfigureOptions(hostingContext.Configuration);
+                    services.AddHttpClients();
+                    services.AddAzureClients(hostingContext.Configuration);
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.Services.Configure<LoggerFilterOptions>(options =>
+                    {
+                        /*
+                         * By default, logs with LogLevel.Warning or higher are sent to Application Insights.
+                         * To change this, remove the default rule so other log levels are sent to Application Insights.
+                         * See for more information: https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide?tabs=hostbuilder%2Cwindows#managing-log-levels
+                         * The default log level for Azure Functions is Information. So by removing the default rule, Information and above will be sent to Application Insights.
+                         */
+                        var defaultRule = options.Rules.FirstOrDefault(rule =>
+                            rule.ProviderName ==
+                            "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider");
+
+                        if (defaultRule is not null)
+                        {
+                            options.Rules.Remove(defaultRule);
+                        }
+                    });
+                })
+                .ConfigureAppConfiguration((hostContext, config) =>
+                {
+                    var hostRoot = "";
+                    if (hostContext.HostingEnvironment.IsProduction())
+                        hostRoot = "/home/site/wwwroot/";
+
+                    config.AddJsonFile($"{hostRoot}host.json", optional: false);
+                })
+                .ConfigureLogging((hostingContext, logging) =>
+                {
+                    logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                })
+                .Build();
 
             await host.RunAsync();
         }
 
-        public static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
+        private static IServiceCollection AddCustomApplicationInsights(this IServiceCollection services)
         {
-            // Add AI worker service with custom options
             services.AddApplicationInsightsTelemetryWorkerService(options =>
             {
                 options.ConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
             });
 
-            // Configure Functions-specific AI settings
             services.ConfigureFunctionsApplicationInsights();
-
-            // Customize logging rules for Application Insights
-            services.Configure<LoggerFilterOptions>(options =>
-            {
-                const string aiProvider = "Microsoft.Extensions.Logging.ApplicationInsights.ApplicationInsightsLoggerProvider";
-
-                // Remove existing default rule for AI provider, if any
-                var defaultRule = options.Rules.FirstOrDefault(r => r.ProviderName == aiProvider);
-                if (defaultRule != null)
-                {
-                    options.Rules.Remove(defaultRule);
-                }
-
-                // Add a new rule to log Information level and above for all categories
-                options.Rules.Add(
-                    new LoggerFilterRule(
-                        providerName: aiProvider,
-                        categoryName: null,
-                        logLevel: LogLevel.Information,
-                        filter: null
-                    )
-                );
-            });
 
             return services;
         }
