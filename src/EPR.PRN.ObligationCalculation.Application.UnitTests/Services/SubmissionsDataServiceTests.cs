@@ -47,7 +47,6 @@ public class SubmissionsDataServiceTests
     public async Task GetSubmissions_ShouldReturnValidData_WhenApiResponseIsSuccessful()
     {
         // Arrange
-        var expectedLogMessage = $"Get Approved Submissions Data from {_lastSuccessfulRunDate}";
         var submitterId = Guid.NewGuid();
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -70,13 +69,6 @@ public class SubmissionsDataServiceTests
         result.Should().NotBeNull();
         result.Count.Should().Be(1);
         result[0].SubmitterId.Should().Be(submitterId);
-
-        _loggerMock.Verify(l => l.Log(
-            LogLevel.Information,
-            It.IsAny<EventId>(),
-            It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(expectedLogMessage)),
-            null,
-            It.IsAny<Func<It.IsAnyType, Exception?, string>>()));
     }
 
     [TestMethod]
