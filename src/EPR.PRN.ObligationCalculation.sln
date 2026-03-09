@@ -13,6 +13,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.PRN.ObligationCalculati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EPR.PRN.ObligationCalculation.Function.IntegrationTests", "EPR.PRN.ObligationCalculation.Function.IntegrationTests\EPR.PRN.ObligationCalculation.Function.IntegrationTests.csproj", "{7F1E29E4-80A2-466B-B091-6BAB20B7A4A2}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "compose", "compose", "{B1D8FF37-17DE-4F45-A8F2-6170212B0571}"
+	ProjectSection(SolutionItems) = preProject
+		..\compose.yml = ..\compose.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -9,7 +9,7 @@ namespace EPR.PRN.ObligationCalculation.Function;
 
 public class StoreApprovedSubmissionsFunction(ILogger<StoreApprovedSubmissionsFunction> logger, ISubmissionsDataService submissionsService, IServiceBusProvider serviceBusProvider, IOptions<ApplicationConfig> config)
 {
-    [Function("StoreApprovedSubmissionsFunction")]
+    [Function(Functions.StoreApprovedSubmissionsFunction)]
     public async Task RunAsync([TimerTrigger("%StoreApprovedSubmissions:Schedule%")] TimerInfo myTimer)
     {
         logger.LogInformation("{LogPrefix}: StoreApprovedSubmissionsFunction: New session started", config.Value.LogPrefix);

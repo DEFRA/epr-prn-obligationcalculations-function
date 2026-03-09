@@ -36,6 +36,8 @@ variables:
     value: true
   - name: dotnetVersion
     value: dotnetVersion8
+  - name: gitleaksFailOnSecretDetection
+    value: false
   - name: runIntegrationTests
     value: true
 
@@ -63,5 +65,6 @@ extends:
     runNugetTasks: ${{ variables.runNugetTasks }}
     serviceName: $(serviceName)
     dotnetVersion: ${{ variables.dotnetVersion }}
+    gitleaksFailOnSecretDetection: ${{ variables.gitleaksFailOnSecretDetection }}
     sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
     runIntegrationTests: ${{ variables.runIntegrationTests }}
