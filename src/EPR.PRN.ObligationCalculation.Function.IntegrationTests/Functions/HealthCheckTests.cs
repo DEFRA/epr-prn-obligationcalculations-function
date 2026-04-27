@@ -1,5 +1,5 @@
 using System.Net;
-using FluentAssertions;
+using AwesomeAssertions;
 using Xunit;
 
 namespace EPR.PRN.ObligationCalculation.Function.IntegrationTests.Functions;
