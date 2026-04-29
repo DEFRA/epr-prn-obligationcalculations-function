@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using Azure.Storage.Blobs;
 using EPR.PRN.ObligationCalculation.Function.Middleware;
-using FluentAssertions;
+using AwesomeAssertions;
 
 namespace EPR.PRN.ObligationCalculation.Function.IntegrationTests;
 
