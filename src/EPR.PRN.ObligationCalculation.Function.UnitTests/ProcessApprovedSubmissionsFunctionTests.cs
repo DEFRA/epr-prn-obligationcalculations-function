@@ -114,7 +114,7 @@ public class ProcessApprovedSubmissionsFunctionTests
                        .ThrowsAsync(new Exception("Test exception"));
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<Exception>(() => _function.RunAsync(serviceBusMessage));
+        await Assert.ThrowsAsync<Exception>(() => _function.RunAsync(serviceBusMessage));
 
         _loggerMock.Verify(l => l.Log(
             LogLevel.Error,

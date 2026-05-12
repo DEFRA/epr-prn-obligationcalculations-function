@@ -106,7 +106,7 @@ public class StoreApprovedSubmissionsFunctionTests
             .ThrowsAsync(new Exception("Test Exception"));
 
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<Exception>(() => _function.RunAsync(_timerInfo));
+        await Assert.ThrowsAsync<Exception>(() => _function.RunAsync(_timerInfo));
 
         // Assert - Ex
         _loggerMock.Verify(l => l.Log(

@@ -112,7 +112,7 @@ public class PrnServiceTests
             });
 
         // Act & Assert
-        _ = await Assert.ThrowsExceptionAsync<HttpRequestException>(() =>
+        _ = await Assert.ThrowsAsync<HttpRequestException>(() =>
             _prnService.ProcessApprovedSubmission(_submissionJson));
         
         // Assert handled by ExpectedException
@@ -136,7 +136,7 @@ public class PrnServiceTests
             .ThrowsAsync(new Exception("Test Exception"));
 
         // Act & Assert
-        _ = await Assert.ThrowsExceptionAsync<Exception>(() =>
+        _ = await Assert.ThrowsAsync<Exception>(() =>
             _prnService.ProcessApprovedSubmission(_submissionJson));
 
         // Assert handled by ExpectedException
