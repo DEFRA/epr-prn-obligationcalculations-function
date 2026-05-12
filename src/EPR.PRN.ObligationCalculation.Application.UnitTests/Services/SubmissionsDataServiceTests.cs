@@ -108,7 +108,7 @@ public class SubmissionsDataServiceTests
             .ThrowsAsync(new Exception("Test Exception"));
 
         // Act & Assert
-        _ = await Assert.ThrowsExceptionAsync<Exception>(() =>
+        _ = await Assert.ThrowsAsync<Exception>(() =>
             _service.GetApprovedSubmissionsData(_lastSuccessfulRunDate));
 
         // Assert handled by ExpectedException
