@@ -1,6 +1,12 @@
 variables:
-  azureSubscription: 'AZR-RWD-PRE1'
-  docker.imageName: 'eprobligationcalc'
-  acr.azureContainerRegistryName: 'prerwdinfac1401'
-  acr.repositoryName: 'eprobligationcalcrepository'
-  serviceName: 'PRERWDWEBFA1410'
+- group: ServiceConnections
+- name: azureSubscription
+  value: $(ServiceConnectionPRE1)
+- name: docker.imageName
+  value: 'eprobligationcalc'
+- name: acr.azureContainerRegistryName
+  value: 'prerwdinfac1401'
+- name: acr.repositoryName
+  value: 'eprobligationcalcrepository'
+- name: serviceName
+  value: 'PRERWDWEBFA1410'
